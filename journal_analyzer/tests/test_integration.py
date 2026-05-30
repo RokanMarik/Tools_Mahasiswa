@@ -124,5 +124,80 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("Test Paper", citation)
 
 
+def test_gap_analysis_pipeline():
+    """Test: parse → reader → gap analyzer → aggregate."""
+    from unittest.mock import patch
+    text = """## ABSTRACT
+This study examines AI in education with a survey of 500 teachers.
+
+## INTRODUCTION
+AI is transforming education globally.
+
+## METHODOLOGY
+Quantitative survey method.
+
+## RESULTS
+75% reported improved engagement.
+
+## CONCLUSION
+More longitudinal research is needed.
+"""
+    from parsers.text_parser import TextParser
+    parser = TextParser()
+    article = parser.parse(text)
+
+    reader_summary = "AI improves engagement in education."
+
+    from workers.reader_worker import ReaderWorker
+    from workers.gap_analyzer_worker import GapAnalyzerWorker
+    from core.output_aggregator import OutputAggregator
+
+    with patch.object(ReaderWorker, "_chat", return_value=reader_summary):
+        reader = ReaderWorker(prompts_dir="journal_analyzer/prompts")
+        reader_result = reader.run(article)
+
+    gap_text = "GAP: 1. Studi longitudinal belum ada. 2. Konteks Asia Tenggara kurang diteliti."
+
+    with patch.object(GapAnalyzerWorker, "_chat", return_value=gap_text):
+        gap_worker = GapAnalyzerWorker(prompts_dir="journal_analyzer/prompts")
+        gap_result = gap_worker.run(article, reader_summary=reader_summary)
+        assert gap_result is not None
+        assert "gap_text" in gap_result
+
+    agg = OutputAggregator()
+    output = agg.aggregate({
+        "reader": {"status": "success", "data": reader_result},
+        "gap_analyzer": {"status": "success", "data": gap_result},
+    })
+    assert "# Ringkasan Jurnal" in output
+    assert "## Research Gap" in output
+    assert "longitudinal" in output
+
+
+def test_data_analysis_pipeline():
+    """Test: data analysis worker → aggregate."""
+    from unittest.mock import patch
+    from workers.data_analysis_worker import DataAnalysisWorker
+    from core.output_aggregator import OutputAggregator
+
+    interp_text = "RINGKASAN DESKRIPTIF:\nMean = 75.3, SD = 12.1\n\nINTERPRETASI: H0 ditolak (p < 0.05)."
+
+    with patch.object(DataAnalysisWorker, "_chat", return_value=interp_text):
+        worker = DataAnalysisWorker(prompts_dir="journal_analyzer/prompts")
+        result = worker.run(
+            research_question="Pengaruh metode X terhadap hasil belajar",
+            dataset_description="n=200, pretest-posttest design",
+        )
+        assert result is not None
+        assert "interpretation" in result
+
+    agg = OutputAggregator()
+    output = agg.aggregate({
+        "data_analysis": {"status": "success", "data": result},
+    })
+    assert "## Analisis Data" in output
+    assert "H0 ditolak" in output
+
+
 if __name__ == "__main__":
     unittest.main()
