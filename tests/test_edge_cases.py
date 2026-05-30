@@ -164,6 +164,55 @@ class TestOpenAlexMock(unittest.TestCase):
         self.assertEqual(papers[0].abstract, "This is a test abstract")
 
 
+class TestSearXNGMock(unittest.TestCase):
+    """Mock tests for SearXNG citation enrichment."""
+
+    @patch("modules.search.searxng.requests.get")
+    def test_searxng_enriches_citations(self, mock_get):
+        """SearXNG should enrich papers with citation counts from Semantic Scholar."""
+        # Mock SearXNG response
+        searxng_response = {
+            "results": [
+                {
+                    "title": "Artificial Intelligence in Education Review",
+                    "url": "https://example.com/paper",
+                    "content": "2023 · AI in education review paper",
+                    "engines": ["google scholar"],
+                }
+            ]
+        }
+        # Mock Semantic Scholar response
+        ss_response = {
+            "data": [
+                {"title": "Artificial Intelligence in Education Review", "citationCount": 42, "year": 2023}
+            ]
+        }
+
+        def side_effect(url, *args, **kwargs):
+            mock_resp = unittest.mock.MagicMock()
+            mock_resp.status_code = 200
+            if "searx" in url.lower() or "localhost" in url.lower() or "8888" in url:
+                mock_resp.json.return_value = searxng_response
+            else:
+                mock_resp.json.return_value = ss_response
+            return mock_resp
+
+        mock_get.side_effect = side_effect
+
+        import os
+        os.environ["SEARXNG_URL"] = "http://localhost:8888"
+
+        from modules.search import searxng
+
+        papers = searxng.search("test", limit=1)
+        self.assertEqual(len(papers), 1)
+        self.assertEqual(papers[0].title, "Artificial Intelligence in Education Review")
+        self.assertEqual(papers[0].citation_count, 42)
+        self.assertIn("google", papers[0].source)
+
+        del os.environ["SEARXNG_URL"]
+
+
 class TestAggregatorParallel(unittest.TestCase):
     """Tests for parallel aggregator behavior."""
 

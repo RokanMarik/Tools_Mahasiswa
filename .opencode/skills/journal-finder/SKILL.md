@@ -15,10 +15,24 @@ Natural language detection:
 - "search for journals on [topic]"
 - "cari paper tentang [topik]"
 
-**Multi-source search:** This skill searches two free APIs:
+**Multi-source search:** This skill searches multiple APIs:
 - **OpenAlex** (api.openalex.org) — 250M+ papers with citation counts, ingests CrossRef + many sources
 - **Garuda** (garuda.ristekbrin.go.id) — Indonesian academic journals
+- **SearXNG + Google Scholar** (optional) — Finds Indonesian journals not indexed in OpenAlex (iicls.org, etc.)
+
 Results are merged, deduplicated by DOI, and sorted by composite score (citations 60% + recency 40%). No API keys needed.
+
+**Enable SearXNG (for Indonesian journal coverage):**
+```bash
+# Start SearXNG via Docker (port 8888)
+docker run -d --name searxng -p 8888:8080 searxng/searxng
+# OR restart existing container
+docker start searxng
+
+# Set environment variable
+set SEARXNG_URL=http://localhost:8888
+```
+SearXNG searches Google Scholar + CrossRef + Semantic Scholar. Citations enriched via Semantic Scholar API.
 
 ## Workflow
 

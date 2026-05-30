@@ -1,12 +1,16 @@
 """SearXNG meta-search engine wrapper for academic papers.
 
-Uses public SearXNG instances (no API key needed) to search Google Scholar,
-CrossRef, and other academic sources. Provides broader coverage for
-Indonesian journals that may not be indexed in OpenAlex.
+Uses local SearXNG instance to search Google Scholar, CrossRef, and other
+academic sources. Provides broader coverage for Indonesian journals that
+may not be indexed in OpenAlex.
+
+Citation enrichment: After fetching SearXNG results, queries Semantic Scholar
+API to get citation counts for each paper (matched by title similarity).
 """
 
 import os
 import re
+import time
 import requests
 from .paper_model import Paper
 
@@ -18,6 +22,7 @@ SEARXNG_INSTANCES = [
     "https://searx.ng",
 ]
 
+SEMANTIC_SCHOLAR_API = "https://api.semanticscholar.org/graph/v1/paper/search"
 REQUEST_TIMEOUT = 15
 
 
@@ -30,22 +35,24 @@ def _get_base_url() -> str:
 
 
 def search(query: str, limit: int = 5) -> list[Paper]:
-    """Search SearXNG for academic papers.
+    """Search SearXNG for academic papers with citation enrichment.
 
-    Tries multiple instances if the first one fails.
+    Tries multiple instances if the first one fails. After getting results,
+    queries Semantic Scholar API to enrich with citation counts.
 
     Args:
         query: Search query string.
         limit: Max results to return.
 
     Returns:
-        List of Paper objects from SearXNG results.
+        List of Paper objects with citation counts.
     """
     base_url = _get_base_url()
+    papers = []
 
     for instance in [base_url] + SEARXNG_INSTANCES:
         if instance != base_url and base_url in SEARXNG_INSTANCES:
-            pass  # skip duplicate
+            continue
         try:
             response = requests.get(
                 f"{instance}/search",
@@ -61,13 +68,62 @@ def search(query: str, limit: int = 5) -> list[Paper]:
             data = response.json()
             results = data.get("results", [])[:limit]
             if results:
-                return [_parse_searxng_result(r) for r in results]
+                papers = [_parse_searxng_result(r) for r in results]
+                break
         except (requests.RequestException, ValueError):
             continue
 
-    raise RuntimeError(
-        f"SearXNG: no results from any instance for query: {query}"
-    )
+    if not papers:
+        raise RuntimeError(
+            f"SearXNG: no results from any instance for query: {query}"
+        )
+
+    # Enrich with citation counts from Semantic Scholar
+    papers = _enrich_citations(papers)
+    return papers
+
+
+def _enrich_citations(papers: list[Paper]) -> list[Paper]:
+    """Enrich papers with citation counts via Semantic Scholar API.
+
+    Matches papers by title (first 5 words) and updates citation_count.
+    """
+    for paper in papers:
+        if not paper.title or paper.citation_count > 0:
+            continue
+
+        try:
+            # Search by title (first 8 words for better matching)
+            title_words = paper.title.split()[:8]
+            search_title = " ".join(title_words)
+
+            r = requests.get(
+                SEMANTIC_SCHOLAR_API,
+                params={
+                    "query": search_title,
+                    "fields": "title,citationCount,year",
+                    "limit": 1,
+                },
+                timeout=10,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                results = data.get("data", [])
+                if results:
+                    match = results[0]
+                    # Only use if year matches (within 2 years) or title similarity
+                    ss_year = match.get("year")
+                    if ss_year and paper.year and abs(ss_year - paper.year) <= 2:
+                        paper.citation_count = match.get("citationCount", 0)
+                    elif not paper.year:
+                        paper.citation_count = match.get("citationCount", 0)
+
+            # Rate limit: small delay between requests
+            time.sleep(0.3)
+        except (requests.RequestException, ValueError):
+            pass  # Skip enrichment on error
+
+    return papers
 
 
 def _parse_searxng_result(result: dict) -> Paper:
