@@ -43,7 +43,10 @@ class ReviewerWorker:
         system_prompt = self._load_system_prompt("reviewer.md")
         user_prompt = self._build_user_prompt(article, reader_summary)
 
-        response = self._chat(system_prompt, user_prompt, model)
+        try:
+            response = self._chat(system_prompt, user_prompt, model)
+        except Exception:
+            return None
         if response is None:
             return None
 
