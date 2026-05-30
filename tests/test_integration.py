@@ -12,22 +12,16 @@ sys.path.insert(0, os.path.dirname(__file__))
 class TestIntegration(unittest.TestCase):
     """Test full workflow: search → save → citation."""
 
-    @patch("scripts.journal_search.JournalFinder")
+    @patch("modules.search.aggregator.search")
     @patch("scripts.zotero_save.ZoteroClient")
     @patch("scripts.zotero_save.CitationFormatter")
-    def test_full_workflow_search_then_save(self, MockFormatter, MockClient, MockFinder):
+    def test_full_workflow_search_then_save(self, MockFormatter, MockClient, mock_search):
         """Full workflow: search papers, then save selected ones."""
-        mock_finder = MagicMock()
-        mock_finder.find_journals.return_value = json.dumps({
-            "status": "success",
-            "query": "test topic",
-            "papers": [
-                {"index": 1, "title": "Paper A", "authors": ["Smith"], "year": 2024, "journal": "J1", "doi": "10.1/a", "url": "https://a.com", "abstract": "", "metadata_source": "crossref"},
-                {"index": 2, "title": "Paper B", "authors": ["Doe"], "year": 2023, "journal": "J2", "doi": "10.2/b", "url": "https://b.com", "abstract": "", "metadata_source": "crossref"},
-            ],
-            "error": None,
-        })
-        MockFinder.return_value = mock_finder
+        from modules.search.paper_model import Paper
+        mock_search.return_value = [
+            Paper(title="Paper A", authors=["Smith"], year=2024, journal="J1", doi="10.1/a", url="https://a.com", source="crossref", abstract=""),
+            Paper(title="Paper B", authors=["Doe"], year=2023, journal="J2", doi="10.2/b", url="https://b.com", source="crossref", abstract=""),
+        ]
 
         mock_client = MagicMock()
         mock_client.get_user_id.return_value = "12345"
