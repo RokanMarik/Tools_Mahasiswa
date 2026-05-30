@@ -456,20 +456,171 @@ Program ini menghasilkan **file-file teks** berikut:
 1. **`curriculum/`** — Direktori utama
    - `curriculum/overview.md` — Peta perjalanan + panduan penggunaan
    - `curriculum/phase-1/` s/d `curriculum/phase-6/` — Folder per fase
+     - Catatan: Fase 4 punya sub-folder `phase-4a/` dan `phase-4b/`
      - `curriculum/phase-N/module-X.Y.md` — Materi lengkap per modul
-     - `curriculum/phase-N/module-X.y-exercises.md` — Soal latihan harian
-     - `curriculum/phase-N/module-X.y-exam.md` — Ulangan akhir modul
-     - `curriculum/phase-N/module-X.y-answer-key.md` — Kunci jawaban + penjelasan
-     - `curriculum/phase-N/module-X.y-notes.md` — Lembar catatan terstruktur
+     - `curriculum/phase-N/module-X.Y-exercises.md` — Soal latihan harian
+     - `curriculum/phase-N/module-X.Y-exam.md` — Ulangan akhir modul
+     - `curriculum/phase-N/module-X.Y-answer-key.md` — Kunci jawaban + penjelasan
+     - `curriculum/phase-N/module-X.Y-notes.md` — Lembar catatan terstruktur
    - `curriculum/validation-exams/` — Ujian validasi untuk skip
-     - `curriculum/validation-exams/module-X.y.md` — Ujian validasi per modul
-     - `curriculum/validation-exams/module-X.y-answer-key.md` — Kunci validasi
+     - `curriculum/validation-exams/module-X.Y.md` — Ujian validasi per modul
+     - `curriculum/validation-exams/module-X.Y-answer-key.md` — Kunci validasi
    - `curriculum/journal-template.md` — Template jurnal belajar
    - `curriculum/progress-map.md` — Progress tracker (update manual)
+   - `curriculum/CHANGELOG.md` — Log perubahan kurikulum
+   - `curriculum/style-guide.md` — Panduan tone & persona (extract dari Section 13)
 
 ---
 
-## 13. Non-Goals
+## 13. Style Guide — Konsistensi Persona "Pak Guru Sabar"
+
+Agar tone tidak "drift" di 50+ modul, ikuti aturan ini:
+
+### 13.1 Kata & Frase yang SELALU Dipakai
+| Situasi | Frase |
+|---------|-------|
+| Pembuka sesi | "Saatnya belajar. Tidak perlu sempurna hari ini." |
+| Siswa stuck | "Tidak apa-apa. Mari kita pelan-pelan." |
+| Setelah contoh | "Coba kamu kerjakan sendiri dulu. Hint ada di bawah kalau perlu." |
+| Siswa salah | "Hampir! Ini kesalahan yang wajar. Coba perhatikan bagian [X]." |
+| Siswa benar | "Bagus! Kamu sudah paham. Ini langkah yang tepat." |
+| Penutup sesi | "Hari ini kamu sudah [pencapaian]. Istirahat. Besok kita lanjut." |
+
+### 13.2 Kata & Frase yang DILARANG
+| Frase | Alasan | Ganti Dengan |
+|-------|--------|-------------|
+| "Ini kan gampang" | Merendahkan | "Ini konsep penting, mari kita pelajari bersama" |
+| "Harusnya kamu sudah tahu" | Menghakimi | "Mari kita review sebentar konsep sebelumnya" |
+| "Perhatian!" | Terlalu kaku | "Ini bagian yang penting ya" |
+| "Kamu harus" | Otoriter | "Coba lakukan ini" |
+| "Jelas bahwa..." | Asumsikan paham | "Seperti yang sudah kita bahas..." |
+
+### 13.3 Panjang Kalimat
+- Kalimat penjelasan: maksimal 25 kata
+- Worked example: setiap langkah max 15 kata + rumus
+- Analogi: max 3 kalimat
+
+---
+
+## 14. Rollback Mechanism — "Kembali ke Modul Sebelumnya"
+
+Jika siswa yang sudah skip modul (via validasi) ternyata kesulitan di modul berikutnya:
+
+```
+ROLLBACK PROTOCOL:
+──────────────────
+1. Identifikasi: "Di soal mana kamu stuck? Konsep apa yang belum jelas?"
+2. Traceback: Cek di lembar catatan modul sebelumnya — "🔗 TERKAIT" section akan tunjuk ke modul yang perlu diulang
+3. Remedial Path: Siswa tidak perlu ulang SEMUA modul sebelumnya — hanya modul spesifik yang jadi fondasi topik yang stuck
+4. Contoh: Stuck di Linear Regression → trace ke Aljabar Linear (Modul 1.2) → ulang hanya Modul 1.2 + lembar catatannya
+```
+
+**Aturan:** Max 2 modul rollback per fase. Jika lebih dari 2, berarti siswa harus review fase tersebut secara menyeluruh.
+
+---
+
+## 15. Quality Assurance — Kriteria Modul "Siap Dipakai"
+
+Setiap modul harus memenuhi checklist ini sebelum ditandai ✅:
+
+```
+MODUL QA CHECKLIST:
+──────────────────
+STRUKTUR:
+[ ] Materi punya 5 langkah: Hook → Concept → Worked Example → Guided Practice → Reflection
+[ ] Ada 14 hari aktivitas terdefinisi (Hari 1-14)
+[ ] Ada lembar catatan terstruktur (template Section 11)
+
+SOAL:
+[ ] 🟢 Pemanasan: tepat 3 soal, level dasar
+[ ] 🟡 Inti: tepat 2 soal, level penerapan
+[ ] 🔴 Tantangan: tepat 1 soal, level analisis
+[ ] Total soal harian = 5-6 per hari latihan
+[ ] Soal ulangan: Bagian A (15 soal), Bagian B (4 soal), Bagian C (1 soal)
+
+KUNCI JAWABAN:
+[ ] Setiap soal punya: jawaban + penjelasan langkah + konsep kunci + kesalahan umum + koneksi topik
+[ ] Tidak ada soal tanpa kunci jawaban
+
+PERSONA:
+[ ] Tone konsisten "Pak Guru Sabar" (cek Section 13)
+[ ] Tidak ada frase terlarang
+[ ] Ada minimal 2 analogi per modul
+
+KONEKSI:
+[ ] Minimal 1 referensi ke modul sebelumnya (🔄 spiral)
+[ ] Minimal 1 preview ke modul berikutnya (🔗 terkait)
+──────────────────
+Semua ✅ = Modul siap dipakai
+```
+
+---
+
+## 16. Buffer Day Guidance (Hari 13-14)
+
+Hari 13-14 BUKAN hari libur. Ini panduan aktivitas:
+
+```
+BUFFER DAY MENU (pilih sesuai kebutuhan):
+
+OPSI A — Remedial (jika nilai ulangan < 80%):
+  → Baca ulang lembar catatan modul ini
+  → Kerjakan ulang soal 🟡 yang kemarin salah
+  → Minta hint ke "kunci jawaban" untuk soal yang masih stuck
+
+OPSI B — Pengayaan (jika nilai ulangan > 90%):
+  → Coba soal 🔴 lagi (yang kemarin dilewati)
+  → Baca "🔗 TERKAIT" di kunci jawaban — pelajari topik yang akan datang
+  → Eksplorasi dataset nyata dari Kaggle (opsional)
+
+OPSI C — Catch-up (jika ada hari yang terlewat):
+  → Kerjakan latihan harian yang terlewat
+  → Tulis jurnal belajar yang belum diisi
+  → Review progress map
+
+OPSI D — Istirahat total (jika burnout):
+  → Tidak ada tugas. Istirahat.
+  → Tidak perlu merasa bersalah.
+```
+
+---
+
+## 17. Difficulty Scaling — Progression Level 🔴
+
+Tantangan (🔴) meningkat secara bertahap:
+
+| Fase | Level 🔴 | Contoh |
+|------|----------|--------|
+| 1 (Math) | Recall + Apply sederhana | "Selesaikan persamaan, lalu jelaskan langkahmu" |
+| 2 (Coding) | Implement dari spesifikasi | "Buat fungsi yang melakukan X, handle edge case Y" |
+| 3 (Data Science) | Analisis + Insight | "Dari dataset ini, temukan 2 pola dan jelaskan artinya" |
+| 4A (Supervised ML) | Model selection + Justifikasi | "Pilih algoritma untuk masalah ini, jelaskan kenapa" |
+| 4B (Advanced ML) | Full pipeline | "Dari data mentah sampai model, buat pipeline lengkap" |
+| 5 (Deep Learning) | Arsitektur + Tuning | "Desain arsitektur neural network untuk masalah X" |
+| 6 (Engineering) | Production-ready system | "Bangun sistem AI end-to-end dengan monitoring" |
+
+---
+
+## 18. Maintenance Strategy — Update Kurikulum
+
+Karena field AI berkembang cepat, kurikulum perlu update berkala:
+
+```
+UPDATE CYCLE:
+─────────────
+- Setiap 6 bulan: Review modul Fase 5-6 (DL & Engineering) untuk update tool/library terbaru
+- Setiap 12 bulan: Review keseluruhan kurikulum — apakah ada topik baru yang harus masuk?
+- Versioning: File spec ini menggunakan semantic versioning di header
+  v1.0.0 = versi initial (Mei 2026)
+  v1.1.0 = update minor (tambah modul, ganti contoh)
+  v2.0.0 = update mayor (struktur fase berubah)
+
+CHANGE LOG (di file terpisah): `curriculum/CHANGELOG.md`
+```
+
+---
+
+## 19. Non-Goals
 
 - Tidak ada video, audio, atau multimedia — **teks only**
 - Tidak ada platform digital khusus — file Markdown bisa dibaca di mana saja
