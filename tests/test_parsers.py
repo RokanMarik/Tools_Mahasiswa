@@ -30,3 +30,38 @@ def test_parse_nonexistent_file():
         assert False, "Should raise FileNotFoundError"
     except FileNotFoundError:
         pass
+
+
+from parsers.text_parser import TextParser
+
+
+def test_parse_text_with_sections():
+    text = """## ABSTRACT
+This is the abstract.
+
+## INTRODUCTION
+This is the introduction.
+
+## METHODOLOGY
+We used a survey method.
+"""
+    parser = TextParser()
+    article = parser.parse(text)
+    assert article.sections["abstract"] == "This is the abstract."
+    assert article.sections["introduction"] == "This is the introduction."
+    assert article.sections["methodology"] == "We used a survey method."
+
+
+def test_parse_text_without_sections():
+    text = "This is just plain text with no headings."
+    parser = TextParser()
+    article = parser.parse(text)
+    assert article.sections["full_text"] == text
+    assert article.raw_text == text
+
+
+def test_parse_short_text_warning():
+    text = "Short text."
+    parser = TextParser()
+    article = parser.parse(text)
+    assert article.metadata.get("warning") is not None
