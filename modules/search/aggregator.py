@@ -6,7 +6,12 @@ from .paper_model import Paper
 from . import openalex, garuda
 from .scoring import sort_papers
 
+# SearXNG is optional — only include if SEARXNG_URL env var is set
+import os
 SOURCES = [openalex, garuda]
+if os.getenv("SEARXNG_URL"):
+    from . import searxng
+    SOURCES.insert(1, searxng)
 
 
 def search(
@@ -60,7 +65,7 @@ def _deduplicate(papers: list[Paper]) -> list[Paper]:
     seen_titles: set[str] = set()
     result: list[Paper] = []
 
-    source_priority = {"garuda": 0, "openalex": 1}
+    source_priority = {"garuda": 0, "openalex": 1, "searxng": 2}
     papers.sort(key=lambda p: source_priority.get(p.source, 99))
 
     for paper in papers:
