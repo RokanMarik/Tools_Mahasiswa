@@ -5,9 +5,10 @@ Usage:
     python analyze.py jurnal.pdf --mode read
     python analyze.py jurnal.pdf --mode review
     python analyze.py jurnal.pdf --mode full
+    python analyze.py jurnal.pdf --mode gap
+    python analyze.py jurnal.pdf --mode generate --prompt "Topik riset"
     python analyze.py --input-text "teks..." --mode review
-
-Note: generate, data-analysis, and compare modes deferred to Phase 2-4.
+    python analyze.py --research-question "Pertanyaan riset" --dataset data.csv --mode data-analysis
 """
 
 import argparse
@@ -20,11 +21,14 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description="Journal Analysis System")
     parser.add_argument("input", nargs="?", help="PDF file or URL/DOI")
-    parser.add_argument("--mode", required=True, choices=["read", "review", "full", "gap", "data-analysis"], help="Analysis mode")
+    parser.add_argument("--mode", required=True, choices=["read", "review", "full", "gap", "data-analysis", "generate"], help="Analysis mode")
     parser.add_argument("--input-text", help="Input text directly")
     parser.add_argument("--no-limit", action="store_true", help="Bypass token budget limit")
     parser.add_argument("--research-question", help="Research question for data-analysis or gap mode")
     parser.add_argument("--dataset", help="CSV/Excel dataset file for data-analysis mode")
+    parser.add_argument("--prompt", help="Research topic/prompt for generate mode")
+    parser.add_argument("--methodology", help="Requested methodology for generate mode")
+    parser.add_argument("--citation-style", help="Citation style for generate mode (default: APA7)")
     args = parser.parse_args()
 
     # Load config
@@ -102,6 +106,14 @@ def main():
     if args.mode == "data-analysis":
         da_result = _run_data_analysis(args, cache, content_hash, config, router)
         results["data_analysis"] = da_result
+
+    if args.mode == "generate":
+        reader_result = _run_reader(article, cache, content_hash, config, router)
+        results["reader"] = reader_result
+        gap_result = _run_gap_analyzer(article, reader_result, cache, content_hash, config, router)
+        results["gap_analyzer"] = gap_result
+        gen_results = _run_generate(args, article, reader_result, gap_result, cache, content_hash, config, router)
+        results.update(gen_results)
 
     # Output
     output = aggregator.aggregate(results)
@@ -216,6 +228,57 @@ def _run_gap_analyzer(article, reader_result, cache, content_hash, config, route
 
     cache.set_analysis(content_hash, "gap_analyzer", result)
     return {"status": "success", "data": result}
+
+
+def _run_generate(args, article, reader_result, gap_result, cache, content_hash, config, router):
+    from workers.generator_worker import GeneratorWorker
+    from workers.self_review_worker import SelfReviewWorker
+
+    results = {}
+
+    # Check cache for draft
+    cached_draft = cache.get_analysis(content_hash, "generator")
+    if cached_draft:
+        results["generator"] = {"status": "success", "data": cached_draft}
+    else:
+        model = router.get_model_name(router.select_model("generate_article", article.word_count))
+        reader_summaries = [reader_result["data"]["summary"]] if reader_result and reader_result["status"] == "success" else []
+        gap_text = gap_result["data"].get("gap_text", "") if gap_result and gap_result["status"] == "success" else ""
+
+        worker = GeneratorWorker()
+        draft_result = worker.run(
+            research_topic=args.prompt or "",
+            reader_summaries=reader_summaries,
+            gap_analysis=gap_text,
+            methodology=args.methodology or "",
+            citation_style=args.citation_style or "APA7",
+            model=model,
+        )
+
+        if draft_result is None:
+            results["generator"] = {"status": "failed", "error": "Generator gagal"}
+        else:
+            cache.set_analysis(content_hash, "generator", draft_result)
+            results["generator"] = {"status": "success", "data": draft_result}
+
+            # Self-review the draft
+            cached_review = cache.get_analysis(content_hash, "self_review")
+            if cached_review:
+                results["self_review"] = {"status": "success", "data": cached_review}
+            else:
+                review_worker = SelfReviewWorker()
+                review_result = review_worker.run(
+                    draft_article=draft_result["draft"],
+                    research_topic=args.prompt or "",
+                )
+
+                if review_result is None:
+                    results["self_review"] = {"status": "failed", "error": "Self-review gagal"}
+                else:
+                    cache.set_analysis(content_hash, "self_review", review_result)
+                    results["self_review"] = {"status": "success", "data": review_result}
+
+    return results
 
 
 def _run_data_analysis(args, cache, content_hash, config, router):

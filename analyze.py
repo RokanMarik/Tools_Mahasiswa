@@ -6,6 +6,7 @@ Usage:
     python analyze.py jurnal.pdf --mode review
     python analyze.py jurnal.pdf --mode full
     python analyze.py jurnal.pdf --mode gap
+    python analyze.py jurnal.pdf --mode generate --prompt "Topik riset"
     python analyze.py --input-text "teks..." --mode review
     python analyze.py --research-question "Pertanyaan riset" --dataset data.csv --mode data-analysis
 """
