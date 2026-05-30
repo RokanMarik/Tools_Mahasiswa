@@ -1,9 +1,12 @@
 """Scoring and sorting logic for journal search results."""
 
+import datetime
+
 from .paper_model import Paper
 
 CITATION_WEIGHT = 0.6
 RECENCY_WEIGHT = 0.4
+_CURRENT_YEAR = datetime.date.today().year
 
 
 def compute_composite_score(papers: list[Paper]) -> list[Paper]:
@@ -19,8 +22,8 @@ def compute_composite_score(papers: list[Paper]) -> list[Paper]:
     years = [p.year for p in papers if p.year is not None]
 
     max_citations = max(citations) if citations else 0
-    min_year = min(years) if years else 2020
-    max_year = max(years) if years else 2025
+    min_year = min(years) if years else _CURRENT_YEAR - 5
+    max_year = max(years) if years else _CURRENT_YEAR
     year_range = max_year - min_year
 
     for paper in papers:
@@ -52,6 +55,8 @@ def sort_papers(
     elif sort_by == "year":
         papers.sort(key=lambda p: p.year or 0, reverse=True)
     elif sort_by == "relevance":
+        # Alias for composite — compute scores then sort
+        compute_composite_score(papers)
         papers.sort(key=lambda p: p.relevance_score, reverse=True)
     else:
         raise ValueError(
