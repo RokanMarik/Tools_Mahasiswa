@@ -119,10 +119,15 @@ def validate_paper_metadata(paper: dict) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Save papers to Zotero")
-    parser.add_argument("--api-key", required=True, help="Zotero API key")
+    parser.add_argument("--api-key", default=None, help="Zotero API key (or set ZOTERO_API_KEY env var)")
     parser.add_argument("--collection", default=None, help="Collection key (optional)")
     parser.add_argument("--papers", required=True, help="JSON array of paper metadata")
     args = parser.parse_args()
+
+    api_key = args.api_key or os.getenv("ZOTERO_API_KEY")
+    if not api_key:
+        print(json.dumps({"status": "error", "saved": [], "skipped": [], "error": "No API key provided. Set --api-key or ZOTERO_API_KEY env var."}))
+        sys.exit(1)
 
     try:
         papers = json.loads(args.papers)
@@ -132,7 +137,7 @@ def main():
     if not isinstance(papers, list):
         papers = [papers]
 
-    result = save_to_zotero(papers, api_key=args.api_key, collection_key=args.collection)
+    result = save_to_zotero(papers, api_key=api_key, collection_key=args.collection)
     print(result)
 
 

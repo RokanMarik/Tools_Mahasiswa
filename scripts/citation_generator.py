@@ -58,7 +58,7 @@ def generate_citations(papers: list[dict], style: str = "apa") -> str:
             "error": None,
         }, ensure_ascii=False)
 
-    except (ValueError, TypeError, AttributeError) as e:
+    except (ValueError, TypeError, AttributeError, KeyError, IndexError) as e:
         return json.dumps({
             "status": "error",
             "citations": [],

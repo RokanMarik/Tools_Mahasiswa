@@ -262,7 +262,7 @@ class ZoteroClient:
             "DOI": item_data.get("doi", item_data.get("DOI", "")),
             "url": item_data.get("url", ""),
             "publicationTitle": item_data.get("journal", item_data.get("publicationTitle", "")),
-            "collections": [collection_key],
+            "collections": [collection_key] if collection_key else [],
         }]
 
         response = self._post(endpoint, payload)

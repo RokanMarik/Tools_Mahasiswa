@@ -96,8 +96,8 @@ class TestZoteroSave(unittest.TestCase):
         self.assertEqual(len(data["skipped"]), 1)
         self.assertEqual(data["skipped"][0]["reason"], "duplicate")
 
-    def test_save_skips_invalid_metadata(self):
-        """Should skip papers without title."""
+    def test_save_connection_error_does_not_crash(self):
+        """Should handle connection error without crashing."""
         from scripts.zotero_save import save_to_zotero
 
         papers = [{"authors": ["Smith"]}, {"title": "Valid Paper"}]

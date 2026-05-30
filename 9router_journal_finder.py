@@ -51,17 +51,17 @@ class JournalFinder:
         except requests.exceptions.RequestException as e:
             return f"Error: {e}"
     
-    def find_journals(self, topic: str) -> str:
+    def find_journals(self, topic: str, limit: int = 5) -> str:
         """
         Cari rekomendasi jurnal berdasarkan topik
         """
         prompt = f"""Saya sedang mencari jurnal ilmiah tentang "{topic}".
         
-Tolong berikan:
-1. 5 jurnal/konferensi terbaik untuk topik ini
-2. Database yang bisa digunakan untuk mencari paper
-3. Keywords yang efektif untuk pencarian
-4. Tips mencari paper berkualitas di bidang ini
+Tolong berikan maksimal {limit} jurnal/konferensi terbaik untuk topik ini.
+Sertakan juga:
+1. Database yang bisa digunakan untuk mencari paper
+2. Keywords yang efektif untuk pencarian
+3. Tips mencari paper berkualitas di bidang ini
 
 Format response dengan jelas dan terstruktur."""
         
