@@ -1,0 +1,25 @@
+{# journal_analyzer/prompts/templates/gap_analyzer_user.j2 #}
+Analisis research gap dari jurnal berikut:
+
+Judul: {{ metadata.title }}
+{% if metadata.authors %}Penulis: {{ metadata.authors | join(', ') }}{% endif %}
+{% if methodology_type %}Metodologi: {{ methodology_type }}{% endif %}
+
+{% if reader_summary %}
+Ringkasan:
+{{ reader_summary }}
+{% endif %}
+
+{% for section_name, content in sections.items() %}
+## {{ section_name | upper }}
+{{ content }}
+{% endfor %}
+
+{% if key_findings %}
+Temuan utama:
+{% for finding in key_findings %}
+- {{ finding }}
+{% endfor %}
+{% endif %}
+
+Identifikasi research gap sesuai format yang ditentukan.
