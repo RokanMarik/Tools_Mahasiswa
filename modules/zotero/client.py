@@ -113,8 +113,6 @@ class ZoteroClient:
                 "format": "json",
                 "limit": limit,
                 "start": start,
-                "content": "json",
-                "include": "data",
             }
             response = self._get(endpoint, params=params)
             data = response.json()
