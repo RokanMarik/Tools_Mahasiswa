@@ -50,4 +50,24 @@ class OutputAggregator:
                 parts.append(f"[data_analysis] Gagal: {da.get('error', 'Unknown error')}. Coba lagi nanti.\n")
             parts.append("")
 
+        if "generator" in worker_results:
+            gen = worker_results["generator"]
+            if gen["status"] == "success":
+                parts.append("## Draft Artikel\n")
+                parts.append(gen["data"].get("draft", "Tidak ada draft."))
+            else:
+                parts.append("## Draft Artikel\n")
+                parts.append(f"[generator] Gagal: {gen.get('error', 'Unknown error')}. Coba lagi nanti.\n")
+            parts.append("")
+
+        if "self_review" in worker_results:
+            sr = worker_results["self_review"]
+            if sr["status"] == "success":
+                parts.append("## Self-Review\n")
+                parts.append(sr["data"].get("review", "Tidak ada review."))
+            else:
+                parts.append("## Self-Review\n")
+                parts.append(f"[self_review] Gagal: {sr.get('error', 'Unknown error')}. Coba lagi nanti.\n")
+            parts.append("")
+
         return "\n".join(parts)

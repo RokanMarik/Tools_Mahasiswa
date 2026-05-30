@@ -68,3 +68,23 @@ def test_aggregate_all_workers():
     assert "Ringkasan Jurnal" in result
     assert "Review Peer" in result
     assert "Research Gap" in result
+
+
+def test_aggregate_with_generation():
+    agg = OutputAggregator()
+    result = agg.aggregate({
+        "generator": {"status": "success", "data": {"draft": "# DRAFT ARTIKEL\n\nTest content."}},
+    })
+    assert "Draft Artikel" in result
+    assert "Test content" in result
+
+
+def test_aggregate_with_generation_and_self_review():
+    agg = OutputAggregator()
+    result = agg.aggregate({
+        "generator": {"status": "success", "data": {"draft": "# DRAFT\nContent."}},
+        "self_review": {"status": "success", "data": {"review": "QUALITY SCORE: 8/10"}},
+    })
+    assert "Draft Artikel" in result
+    assert "Self-Review" in result
+    assert "8/10" in result
