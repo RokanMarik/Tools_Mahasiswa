@@ -23,8 +23,9 @@
 | Fase | Metode | Alasan |
 |------|--------|--------|
 | 1-2 (bulan 1-6) | Sequential/Mastery | Pemula butuh instruksi eksplisit & berurutan |
-| 3-4 (bulan 6-14) | Spiral + Mini Proyek | Konsep diulang dalam konteks baru |
-| 5-6 (bulan 14-22) | Project-Based | Expertise cukup tinggi → proyek = optimal |
+| 3-4A (bulan 6-11) | Spiral + Mini Proyek | Konsep diulang dalam konteks baru |
+| 4B-5 (bulan 12-18) | Spiral → Project-Based | Transisi ke pembelajaran berbasis proyek |
+| 6 (bulan 18-22) | Project-Based | Expertise cukup tinggi → proyek = optimal |
 
 ---
 
@@ -37,7 +38,8 @@
 | 1. Math Foundation | 1-4 | Aritmetika, Aljabar, Statistika | Skor ulangan ≥ 80% |
 | 2. Programming Basics | 3-6 | Python, Logika, Struktur Data | Script sederhana |
 | 3. Data Science | 6-9 | NumPy, Pandas, Visualisasi, EDA | Analisis dataset lengkap |
-| 4. Machine Learning | 9-14 | Regresi, Klasifikasi, Clustering, Evaluation | Model ML berfungsi |
+| 4A. Supervised ML | 9-11 | Regresi, Klasifikasi, Model Evaluation | Model supervised berfungsi |
+| 4B. Advanced ML | 12-14 | Clustering, Feature Engineering, Ensemble | Model unsupervised + pipeline |
 | 5. Deep Learning | 14-18 | Neural Network, CNN, RNN, NLP | Model DL untuk klasifikasi |
 | 6. AI Engineering | 18-22 | MLOps, Deployment, RAG, LLM, Best Practices | Sistem AI production-ready |
 
@@ -84,13 +86,15 @@ Hari 13-14: Buffer / remedial jika diperlukan
 
 ### 4.1 Tiga Level Soal Harian
 
-| Level | Nama | Contoh | Tujuan |
-|-------|------|--------|--------|
-| 🟢 | Pemanasan | "Hitung: 3x + 5 = 14, berapa x?" | Cek pemahaman dasar |
-| 🟡 | Inti | "Buat fungsi Python yang hitung rata-rata dari list" | Terapkan konsep |
-| 🔴 | Tantangan | "Dari data penjualan ini, prediksi bulan depan." | Berpikir kritis |
+| Level | Nama | Contoh | Kuota/Hari | Tujuan |
+|-------|------|--------|-----------|--------|
+| 🟢 | Pemanasan | "Hitung: 3x + 5 = 14, berapa x?" | 3 soal | Cek pemahaman dasar |
+| 🟡 | Inti | "Buat fungsi Python yang hitung rata-rata dari list" | 2 soal | Terapkan konsep |
+| 🔴 | Tantangan | "Dari data penjualan ini, prediksi bulan depan." | 1 soal (opsional) | Berpikir kritis |
 
-**Aturan:** Harus selesaikan 🟢 → 🟡 → 🔴 secara berurutan. Jika 🔴 tidak bisa, kembali ke 🟡 dan review.
+**Total: ~5-6 soal/hari**, realistis untuk sesi 1-2 jam.
+
+**Aturan:** Harus selesaikan 🟢 → 🟡 → 🔴 secara berurutan. Jika 🔴 tidak bisa, kembali ke 🟡 dan review. Jika 🟢 salah > 2 dari 3, ulangi materi sebelum lanjut ke 🟡.
 
 ---
 
@@ -125,6 +129,21 @@ Total: 100 poin
 ### 5.3 Frekuensi Ulangan
 - Setiap akhir modul (~2 minggu sekali)
 - Ringan, fokus pemahaman konsep (bukan menghafal)
+
+### 5.4 Spaced Repetition — Review Berkala
+
+Setiap **4 minggu** (setelah 2 modul selesai), ada **1 hari Review**:
+
+```
+REVIEW DAY (setiap 4 minggu):
+────────────────────────────
+1. Soal campuran dari modul-modul sebelumnya (🟢 🟡 dari 2-4 modul lalu)
+2. Koneksi antar topik: "Ingat aljabar linear di Modul 1.2? Ini dipakai di neural network."
+3. Self-assessment: "Topik mana dari fase sebelumnya yang sudah lupa?"
+4. Refresh singkat: Baca ulang lembar catatan dari topik yang lupa
+```
+
+**Tujuan:** Mencegah "forgetting curve" — siswa tidak lupa fondasi saat masuk ke topik lanjut.
 
 ---
 
@@ -303,7 +322,7 @@ Total: 100 poin | Pass mark: 85% | Waktu: 30 menit
 | 3.7 | 13-14 | Data cleaning, handling missing values | Praktik nyata |
 | 3.8 | 15-16 | **Proyek: Analisis Dataset Lengkap + Ulangan** | Portfolio piece #1 |
 
-### 10.4 Fase 4: Machine Learning (Bulan 9-14)
+### 10.4 Fase 4A: Supervised Machine Learning (Bulan 9-11)
 
 | Modul | Minggu | Topik | Lembar Catatan |
 |-------|--------|-------|----------------|
@@ -311,14 +330,20 @@ Total: 100 poin | Pass mark: 85% | Waktu: 30 menit
 | 4.2 | 3-4 | Linear Regression | 🔄 Ulang aljabar linear + statistika |
 | 4.3 | 5-6 | Logistic Regression | 🔄 Ulang probability |
 | 4.4 | 7-8 | Decision Trees & Random Forest | Algoritma non-linear |
-| 4.5 | 9-10 | K-Means Clustering | 🔄 Ulang statistik deskriptif |
-| 4.6 | 11-12 | Model Evaluation: accuracy, precision, recall, F1, ROC | Cara ukur kualitas model |
-| 4.7 | 13-14 | Feature Engineering & Selection | Seni menyiapkan data |
-| 4.8 | 15-16 | Cross-validation, overfitting, regularization | 🔄 Ulang konsep generalisasi |
-| 4.9 | 17-20 | SVM, Naive Bayes, Gradient Boosting | Algoritma lanjutan |
-| 4.10 | 21-24 | **Proyek ML End-to-End + Ulangan Fase 4** | Portfolio piece #2 |
+| 4.5 | 9-10 | Model Evaluation: accuracy, precision, recall, F1, ROC | Cara ukur kualitas model |
+| 4.6 | 11-12 | **Mini Project Supervised ML + Ulangan Fase 4A** | 🎉 Milestone: "ML Apprentice" |
 
-### 10.5 Fase 5: Deep Learning (Bulan 14-18)
+### 10.5 Fase 4B: Advanced Machine Learning (Bulan 12-14)
+
+| Modul | Minggu | Topik | Lembar Catatan |
+|-------|--------|-------|----------------|
+| 4.7 | 1-2 | K-Means Clustering, PCA | 🔄 Ulang statistik deskriptif |
+| 4.8 | 3-4 | Feature Engineering & Selection | Seni menyiapkan data |
+| 4.9 | 5-6 | Cross-validation, overfitting, regularization | 🔄 Ulang konsep generalisasi |
+| 4.10 | 7-8 | SVM, Naive Bayes, Gradient Boosting | Algoritma lanjutan |
+| 4.11 | 9-10 | **Proyek ML End-to-End + Ulangan Fase 4B** | Portfolio piece #2 |
+
+### 10.6 Fase 5: Deep Learning (Bulan 14-18)
 
 | Modul | Minggu | Topik | Lembar Catatan |
 |-------|--------|-------|----------------|
@@ -330,8 +355,9 @@ Total: 100 poin | Pass mark: 85% | Waktu: 30 menit
 | 5.6 | 11-12 | Transfer Learning | Pakai model pre-trained |
 | 5.7 | 13-14 | Hyperparameter Tuning | Optimasi model |
 | 5.8 | 15-16 | **Proyek DL: Image/Text Classifier + Ulangan** | Portfolio piece #3 |
+| 5.9 | 17-18 | AI Ethics: bias, fairness, interpretability | Tanggung jawab engineer |
 
-### 10.6 Fase 6: AI Engineering & Production (Bulan 18-22)
+### 10.7 Fase 6: AI Engineering & Production (Bulan 18-22)
 
 | Modul | Minggu | Topik | Lembar Catatan |
 |-------|--------|-------|----------------|
@@ -342,7 +368,44 @@ Total: 100 poin | Pass mark: 85% | Waktu: 30 menit
 | 6.5 | 9-10 | RAG (Retrieval-Augmented Generation) | Sistem AI + knowledge base |
 | 6.6 | 11-12 | Monitoring & Maintaining ML in Production | Model drift, retraining |
 | 6.7 | 13-14 | Best Practices: code review, testing ML, documentation | Profesional |
-| 6.8 | 15-18 | **Capstone Project: Sistem AI Production-Ready** | Portfolio final + job-ready |
+| 6.8 | 15-16 | Capstone Project: Sistem AI Production-Ready | Portfolio final |
+| 6.9 | 17-18 | Interview Prep & Portfolio Presentation | Siap kerja |
+
+### 10.8 Competency Checklist — Definisi "Siap Kerja"
+
+Setelah menyelesaikan Fase 6, siswa harus bisa menjawab **YA** pada semua item berikut:
+
+```
+COMPETENCY CHECKLIST — AI ENGINEER READY
+═══════════════════════════════════════════
+
+TEKNIS:
+[ ] Bisa bangun & deploy ML model ke production (API + container)
+[ ] Bisa menjelaskan trade-off antara 5+ algoritma ML dan kapan pakai masing-masing
+[ ] Bisa baca paper AI dan implementasi dasar dari paper tersebut
+[ ] Bisa melakukan EDA lengkap pada dataset baru (dari loading sampai insight)
+[ ] Paham MLOps basics: versioning data/model, monitoring, retraining trigger
+[ ] Bisa membuat pipeline ML end-to-end (data → train → evaluate → deploy)
+
+PORTFOLIO:
+[ ] Punya 3+ proyek yang bisa ditunjukkan:
+    - Proyek 1: Analisis dataset lengkap (Fase 3)
+    - Proyek 2: Model ML dengan evaluasi (Fase 4)
+    - Proyek 3: Model DL atau sistem AI production-ready (Fase 5/6)
+
+KOMUNIKASI:
+[ ] Bisa jelaskan konsep ML ke non-technical stakeholder
+[ ] Bisa dokumentasikan proyek dengan README yang jelas
+[ ] Bisa presentasi hasil analisis/model dalam 10 menit
+
+MINDSET:
+[ ] Tahu cara cari jawaban sendiri (dokumentasi, Stack Overflow, paper)
+[ ] Paham bahwa "model sempurna" tidak ada — yang ada "model cukup baik untuk konteks ini"
+[ ] Siap terus belajar — AI berkembang cepat, tidak ada yang "selesai belajar"
+═══════════════════════════════════════════
+```
+
+**Kriteria kelulusan akhir:** Semua item ✅ = "AI Engineer Ready"
 
 ---
 
