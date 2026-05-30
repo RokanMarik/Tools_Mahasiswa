@@ -8,7 +8,7 @@ import type { BahasaMarker } from "@/lib/types";
 
 const LanguageMap = dynamic(
   () => import("@/components/map/LanguageMap").then((m) => ({ default: m.LanguageMap })),
-  { ssr: false, loading: () => <div className="flex-1 bg-earth-200 flex items-center justify-center">Memuat peta...</div> }
+  { ssr: false, loading: () => <div className="absolute inset-0 bg-earth-200 flex items-center justify-center">Memuat peta...</div> }
 );
 
 export default function MapPage() {
@@ -22,7 +22,6 @@ export default function MapPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResultInfo, setSearchResultInfo] = useState<string | null>(null);
 
-  // Fetch markers
   useEffect(() => {
     fetch("/api/locations/markers")
       .then((r) => r.json())
@@ -30,18 +29,15 @@ export default function MapPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch rumpun
   useEffect(() => {
     fetch("/api/rumpun")
       .then((r) => r.json())
       .then((data) => setRumpunList(data));
   }, []);
 
-  // Smart search
   const handleSmartSearch = async (query: string) => {
     setSearchLoading(true);
     setSearchResultInfo(null);
-
     try {
       const res = await fetch("/api/search", {
         method: "POST",
@@ -49,14 +45,9 @@ export default function MapPage() {
         body: JSON.stringify({ query }),
       });
       const data = await res.json();
-
       if (data.results) {
         setBahasaList(data.results);
-        setSearchResultInfo(
-          data.usedAI
-            ? `AI: ${data.results.length} hasil untuk "${query}"`
-            : `${data.results.length} hasil untuk "${query}"`
-        );
+        setSearchResultInfo(data.usedAI ? `AI: ${data.results.length} hasil` : `${data.results.length} hasil`);
       }
     } catch {
       const q = query.toLowerCase();
@@ -64,16 +55,14 @@ export default function MapPage() {
         (b) => b.namaBahasa.toLowerCase().includes(q) || b.namaLokal?.toLowerCase().includes(q)
       );
       setBahasaList(filtered);
-      setSearchResultInfo(`Ditemukan ${filtered.length} bahasa`);
+      setSearchResultInfo(`${filtered.length} bahasa ditemukan`);
     } finally {
       setSearchLoading(false);
     }
   };
 
-  // Apply filters
   useEffect(() => {
     if (searchResultInfo) return;
-
     let filtered = markers;
     if (rumpunFilter) filtered = filtered.filter((b) => b.rumpunNama === rumpunFilter);
     if (vitalitasFilter) filtered = filtered.filter((b) => b.statusVitalitas === vitalitasFilter);
@@ -81,20 +70,21 @@ export default function MapPage() {
   }, [rumpunFilter, vitalitasFilter, markers, searchResultInfo]);
 
   useEffect(() => {
-    if (searchResultInfo && (rumpunFilter || vitalitasFilter)) {
-      setSearchResultInfo(null);
-    }
+    if (searchResultInfo && (rumpunFilter || vitalitasFilter)) setSearchResultInfo(null);
   }, [rumpunFilter, vitalitasFilter, searchResultInfo]);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen relative">
+      {/* Header floating */}
       <Header />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Full-width map */}
-        <div className="flex-1 min-h-0">
-          <LanguageMap markers={bahasaList} />
-        </div>
-        {/* Bottom panel */}
+
+      {/* Full-screen map */}
+      <div className="absolute inset-0">
+        <LanguageMap markers={bahasaList} />
+      </div>
+
+      {/* Bottom panel */}
+      <div className="absolute bottom-0 left-0 right-0 z-[1000]">
         <BottomPanel
           search={search}
           onSearchChange={setSearch}
@@ -107,14 +97,9 @@ export default function MapPage() {
           onVitalitasChange={setVitalitasFilter}
           rumpunList={rumpunList}
           bahasaList={bahasaList.map((b) => ({
-            id: b.id,
-            namaBahasa: b.namaBahasa,
-            namaLokal: b.namaLokal,
-            jumlahPenutur: b.jumlahPenutur,
-            statusVitalitas: b.statusVitalitas,
-            rumpunNama: b.rumpunNama,
-            lat: b.lat,
-            lng: b.lng,
+            id: b.id, namaBahasa: b.namaBahasa, namaLokal: b.namaLokal,
+            jumlahPenutur: b.jumlahPenutur, statusVitalitas: b.statusVitalitas,
+            rumpunNama: b.rumpunNama, lat: b.lat, lng: b.lng,
           }))}
           loading={loading}
         />
