@@ -42,7 +42,7 @@ def search_journals(topic: str, limit: int = 3) -> str:
         finder = JournalFinder()
 
         raw_response = finder.find_journals(topic, limit=limit)
-        papers = _parse_journal_response(raw_response, topic, limit)
+        papers = _parse_journal_response(raw_response, limit)
 
         return json.dumps({
             "status": "success",
@@ -60,16 +60,17 @@ def search_journals(topic: str, limit: int = 3) -> str:
         }, ensure_ascii=False)
 
 
-def _parse_journal_response(raw: str, query: str, limit: int) -> list:
+def _parse_journal_response(raw: str, limit: int) -> list:
     """Parse raw 9Router response into structured paper list."""
     # Try JSON first (for mocked/test responses)
     try:
         data = json.loads(raw)
         if isinstance(data, dict) and "papers" in data:
             papers = data["papers"]
+            result = []
             for i, paper in enumerate(papers[:limit]):
-                paper["index"] = i + 1
-            return papers[:limit]
+                result.append({**paper, "index": i + 1})
+            return result
     except (json.JSONDecodeError, TypeError):
         pass
 
@@ -86,7 +87,7 @@ def _parse_journal_response(raw: str, query: str, limit: int) -> list:
                 current_paper = {}
             continue
 
-        if line[0].isdigit() and (line[1] == "." or line[1] == ")"):
+        if len(line) >= 2 and line[0].isdigit() and line[1] in ".)":
             if current_paper.get("title"):
                 papers.append(current_paper)
             title = line[2:].strip()
@@ -113,10 +114,10 @@ def _parse_journal_response(raw: str, query: str, limit: int) -> list:
     if current_paper.get("title"):
         papers.append(current_paper)
 
+    result = []
     for i, paper in enumerate(papers[:limit]):
-        paper["index"] = i + 1
-
-    return papers[:limit]
+        result.append({**paper, "index": i + 1})
+    return result
 
 
 def main():

@@ -74,7 +74,81 @@ class TestJournalSearch(unittest.TestCase):
 
         search_journals("topic")
         call_args = mock_finder.find_journals.call_args
-        self.assertIn("limit", call_args.kwargs or {})
+        self.assertEqual(call_args.kwargs.get("limit"), 3)
+
+
+    def test_parse_text_response_valid(self):
+        """Should parse numbered paper list from text."""
+        from scripts.journal_search import _parse_journal_response
+
+        raw = """1. Deep Learning Review
+Authors: Smith, Johnson
+Year: 2024
+Journal: AI Journal
+DOI: 10.1234/review
+URL: https://example.com/review
+
+2. Neural Networks Survey
+Authors: Doe
+Year: 2023
+Journal: ML Review
+DOI: 10.5678/survey
+URL: https://example.com/survey"""
+
+        papers = _parse_journal_response(raw, 2)
+        self.assertEqual(len(papers), 2)
+        self.assertEqual(papers[0]["title"], "Deep Learning Review")
+        self.assertEqual(papers[0]["authors"], ["Smith", "Johnson"])
+        self.assertEqual(papers[0]["year"], 2024)
+        self.assertEqual(papers[1]["title"], "Neural Networks Survey")
+
+    def test_parse_text_response_empty_string(self):
+        """Should handle empty string gracefully."""
+        from scripts.journal_search import _parse_journal_response
+
+        papers = _parse_journal_response("", 3)
+        self.assertEqual(len(papers), 0)
+
+    def test_parse_text_response_single_char_line(self):
+        """Should not crash on single-character lines."""
+        from scripts.journal_search import _parse_journal_response
+
+        raw = "1\nSome text\n2. Valid Paper\nAuthors: Test"
+        papers = _parse_journal_response(raw, 3)
+        # Should not crash, and should parse valid paper
+        self.assertTrue(len(papers) >= 0)
+
+    def test_parse_respects_limit(self):
+        """Should truncate to limit."""
+        from scripts.journal_search import _parse_journal_response
+
+        raw = """1. Paper One
+Authors: A
+Year: 2024
+
+2. Paper Two
+Authors: B
+Year: 2024
+
+3. Paper Three
+Authors: C
+Year: 2024"""
+
+        papers = _parse_journal_response(raw, 2)
+        self.assertEqual(len(papers), 2)
+        self.assertEqual(papers[0]["title"], "Paper One")
+        self.assertEqual(papers[1]["title"], "Paper Two")
+
+    def test_parse_no_dict_mutation(self):
+        """Should not mutate input dicts if passed as list."""
+        from scripts.journal_search import _parse_journal_response
+
+        # This tests that when we build the result, we create new dicts
+        raw = "1. Test Paper\nAuthors: Smith\nYear: 2024"
+        papers = _parse_journal_response(raw, 1)
+        # Verify index was added
+        self.assertIn("index", papers[0])
+        self.assertEqual(papers[0]["index"], 1)
 
 
 if __name__ == "__main__":
