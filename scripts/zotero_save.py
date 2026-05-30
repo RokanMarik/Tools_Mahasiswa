@@ -19,7 +19,7 @@ from modules.zotero.client import ZoteroClient
 from modules.zotero.citation_formatter import CitationFormatter
 
 
-def save_to_zotero(papers: list, api_key: str, collection_key: str = None) -> str:
+def save_to_zotero(papers: list, api_key: str, collection_key: str | None = None) -> str:
     """Save papers to Zotero. Returns JSON string.
 
     Args:
@@ -71,8 +71,7 @@ def save_to_zotero(papers: list, api_key: str, collection_key: str = None) -> st
         }
 
         try:
-            target_key = collection_key or ""
-            result = client.add_item(target_key, item_data) if target_key else client.add_item("", item_data)
+            result = client.add_item(collection_key or "", item_data)
 
             citation = formatter.format(item_data, style="apa")
 
@@ -125,7 +124,11 @@ def main():
     parser.add_argument("--papers", required=True, help="JSON array of paper metadata")
     args = parser.parse_args()
 
-    papers = json.loads(args.papers)
+    try:
+        papers = json.loads(args.papers)
+    except json.JSONDecodeError as e:
+        print(json.dumps({"status": "error", "saved": [], "skipped": [], "error": f"Invalid JSON: {e}"}))
+        sys.exit(1)
     if not isinstance(papers, list):
         papers = [papers]
 
