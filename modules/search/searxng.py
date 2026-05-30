@@ -52,9 +52,8 @@ def search(query: str, limit: int = 5) -> list[Paper]:
                 params={
                     "q": query,
                     "format": "json",
-                    "categories": "general,science",
-                    "engines": "google scholar,crossref,google,duckduckgo",
-                    "language": "en,id",
+                    "engines": "google scholar,semantic scholar,crossref,google",
+                    "language": "auto",
                 },
                 timeout=REQUEST_TIMEOUT,
             )
