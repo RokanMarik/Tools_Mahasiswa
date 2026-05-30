@@ -8,6 +8,7 @@ import requests
 import xml.etree.ElementTree as ET
 from typing import List, Dict
 from urllib.parse import quote
+from indonesian_apis import search_indonesian_papers
 
 
 class AcademicAPIs:
@@ -20,7 +21,7 @@ class AcademicAPIs:
     
     def search_all(self, query: str, max_results: int = 3) -> List[Dict]:
         """
-        Search across all academic APIs
+        Search across all academic APIs (International + Indonesian)
         
         Args:
             query: Search query
@@ -31,14 +32,22 @@ class AcademicAPIs:
         """
         papers = []
         
-        # Search arXiv
+        # Search Indonesian APIs first (prioritize local)
         try:
-            arxiv_papers = self.search_arxiv(query, max_results=2)
-            papers.extend(arxiv_papers)
+            indo_papers = search_indonesian_papers(query, max_results=2)
+            papers.extend(indo_papers)
         except Exception as e:
-            print(f"[arXiv ERROR] {e}")
+            print(f"[Indonesian APIs ERROR] {e}")
         
-        # Search PubMed (if not enough from arXiv)
+        # Search arXiv
+        if len(papers) < max_results:
+            try:
+                arxiv_papers = self.search_arxiv(query, max_results=2)
+                papers.extend(arxiv_papers)
+            except Exception as e:
+                print(f"[arXiv ERROR] {e}")
+        
+        # Search PubMed (if not enough)
         if len(papers) < max_results:
             try:
                 pubmed_papers = self.search_pubmed(query, max_results=2)
