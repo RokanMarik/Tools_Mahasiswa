@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { BottomPanel } from "@/components/layout/BottomPanel";
 import type { BahasaMarker } from "@/lib/types";
 
 const LanguageMap = dynamic(
@@ -55,11 +55,10 @@ export default function MapPage() {
         setSearchResultInfo(
           data.usedAI
             ? `AI: ${data.results.length} hasil untuk "${query}"`
-            : `Keyword: ${data.results.length} hasil untuk "${query}"`
+            : `${data.results.length} hasil untuk "${query}"`
         );
       }
     } catch {
-      // Fallback: client-side filter
       const q = query.toLowerCase();
       const filtered = markers.filter(
         (b) => b.namaBahasa.toLowerCase().includes(q) || b.namaLokal?.toLowerCase().includes(q)
@@ -71,9 +70,9 @@ export default function MapPage() {
     }
   };
 
-  // Apply filters (rumpun + vitalitas only, search handled by smart search)
+  // Apply filters
   useEffect(() => {
-    if (searchResultInfo) return; // Don't override search results
+    if (searchResultInfo) return;
 
     let filtered = markers;
     if (rumpunFilter) filtered = filtered.filter((b) => b.rumpunNama === rumpunFilter);
@@ -81,7 +80,6 @@ export default function MapPage() {
     setBahasaList(filtered);
   }, [rumpunFilter, vitalitasFilter, markers, searchResultInfo]);
 
-  // Reset search result info when filters change
   useEffect(() => {
     if (searchResultInfo && (rumpunFilter || vitalitasFilter)) {
       setSearchResultInfo(null);
@@ -91,8 +89,13 @@ export default function MapPage() {
   return (
     <div className="h-screen flex flex-col">
       <Header />
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Full-width map */}
+        <div className="flex-1 min-h-0">
+          <LanguageMap markers={bahasaList} />
+        </div>
+        {/* Bottom panel */}
+        <BottomPanel
           search={search}
           onSearchChange={setSearch}
           onSmartSearch={handleSmartSearch}
@@ -110,10 +113,11 @@ export default function MapPage() {
             jumlahPenutur: b.jumlahPenutur,
             statusVitalitas: b.statusVitalitas,
             rumpunNama: b.rumpunNama,
+            lat: b.lat,
+            lng: b.lng,
           }))}
           loading={loading}
         />
-        <div className="flex-1"><LanguageMap markers={bahasaList} /></div>
       </div>
     </div>
   );
