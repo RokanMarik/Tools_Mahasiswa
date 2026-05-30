@@ -88,3 +88,12 @@ def test_aggregate_with_generation_and_self_review():
     assert "Draft Artikel" in result
     assert "Self-Review" in result
     assert "8/10" in result
+
+
+def test_aggregate_with_comparison():
+    agg = OutputAggregator()
+    result = agg.aggregate({
+        "comparison": {"status": "success", "data": {"comparison": "Paper 1 vs Paper 2: ..."}},
+    })
+    assert "Perbandingan" in result
+    assert "Paper 1 vs Paper 2" in result

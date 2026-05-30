@@ -70,4 +70,14 @@ class OutputAggregator:
                 parts.append(f"[self_review] Gagal: {sr.get('error', 'Unknown error')}. Coba lagi nanti.\n")
             parts.append("")
 
+        if "comparison" in worker_results:
+            comp = worker_results["comparison"]
+            if comp["status"] == "success":
+                parts.append("## Perbandingan Paper\n")
+                parts.append(comp["data"].get("comparison", "Tidak ada perbandingan."))
+            else:
+                parts.append("## Perbandingan Paper\n")
+                parts.append(f"[comparison] Gagal: {comp.get('error', 'Unknown error')}. Coba lagi nanti.\n")
+            parts.append("")
+
         return "\n".join(parts)
