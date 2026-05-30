@@ -3,4 +3,6 @@ __pycache__/
 *.pyo
 .env
 .cache/
+cache/
+output/
 data/state_store.db/
