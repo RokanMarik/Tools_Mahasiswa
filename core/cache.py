@@ -4,6 +4,8 @@ import glob
 import time
 from typing import Optional
 
+SECONDS_PER_DAY = 86400
+
 
 class AnalysisCache:
     """Content-hash based cache for parsed articles and analysis results.
@@ -37,7 +39,10 @@ class AnalysisCache:
         if not os.path.exists(path):
             return None
         with open(path, "r") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return None
 
     # --- Analysis result cache (TTL-based) ---
 
@@ -51,9 +56,12 @@ class AnalysisCache:
         if not os.path.exists(path):
             return None
         with open(path, "r") as f:
-            entry = json.load(f)
+            try:
+                entry = json.load(f)
+            except json.JSONDecodeError:
+                return None
         age_seconds = time.time() - entry["timestamp"]
-        if age_seconds > self.ttl_days * 86400:
+        if age_seconds > self.ttl_days * SECONDS_PER_DAY:
             os.remove(path)
             return None
         return entry["data"]
