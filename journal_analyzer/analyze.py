@@ -20,9 +20,11 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description="Journal Analysis System")
     parser.add_argument("input", nargs="?", help="PDF file or URL/DOI")
-    parser.add_argument("--mode", required=True, choices=["read", "review", "full"], help="Analysis mode")
+    parser.add_argument("--mode", required=True, choices=["read", "review", "full", "gap", "data-analysis"], help="Analysis mode")
     parser.add_argument("--input-text", help="Input text directly")
     parser.add_argument("--no-limit", action="store_true", help="Bypass token budget limit")
+    parser.add_argument("--research-question", help="Research question for data-analysis or gap mode")
+    parser.add_argument("--dataset", help="CSV/Excel dataset file for data-analysis mode")
     args = parser.parse_args()
 
     # Load config
@@ -90,6 +92,16 @@ def main():
     if args.mode in ("review", "full"):
         reviewer_result = _run_reviewer(article, results.get("reader"), cache, content_hash, config, router)
         results["reviewer"] = reviewer_result
+
+    if args.mode == "gap":
+        reader_result = _run_reader(article, cache, content_hash, config, router)
+        results["reader"] = reader_result
+        gap_result = _run_gap_analyzer(article, reader_result, cache, content_hash, config, router)
+        results["gap_analyzer"] = gap_result
+
+    if args.mode == "data-analysis":
+        da_result = _run_data_analysis(args, cache, content_hash, config, router)
+        results["data_analysis"] = da_result
 
     # Output
     output = aggregator.aggregate(results)
@@ -183,6 +195,49 @@ def _run_reviewer(article, reader_result, cache, content_hash, config, router):
         return {"status": "failed", "error": "Reviewer Worker gagal"}
 
     cache.set_analysis(content_hash, "reviewer", result)
+    return {"status": "success", "data": result}
+
+
+def _run_gap_analyzer(article, reader_result, cache, content_hash, config, router):
+    from workers.gap_analyzer_worker import GapAnalyzerWorker
+
+    cached = cache.get_analysis(content_hash, "gap_analyzer")
+    if cached:
+        return {"status": "success", "data": cached}
+
+    model = router.get_model_name(router.select_model("gap_analysis", article.word_count))
+    reader_summary = reader_result["data"]["summary"] if reader_result and reader_result["status"] == "success" else None
+
+    worker = GapAnalyzerWorker()
+    result = worker.run(article, reader_summary=reader_summary, model=model)
+
+    if result is None:
+        return {"status": "failed", "error": "Gap Analyzer gagal"}
+
+    cache.set_analysis(content_hash, "gap_analyzer", result)
+    return {"status": "success", "data": result}
+
+
+def _run_data_analysis(args, cache, content_hash, config, router):
+    from workers.data_analysis_worker import DataAnalysisWorker
+
+    cached = cache.get_analysis(content_hash, "data_analysis")
+    if cached:
+        return {"status": "success", "data": cached}
+
+    model = router.get_model_name(router.select_model("data_analysis_own", 1000))
+
+    worker = DataAnalysisWorker()
+    result = worker.run(
+        research_question=args.research_question or "",
+        dataset_description=args.dataset or "",
+        statistical_results="",
+    )
+
+    if result is None:
+        return {"status": "failed", "error": "Data Analysis gagal"}
+
+    cache.set_analysis(content_hash, "data_analysis", result)
     return {"status": "success", "data": result}
 
 

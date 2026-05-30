@@ -5,8 +5,9 @@
       "read": 5000,
       "review": 15000,
       "full": 30000,
-      "generate": 40000,
-      "data_analysis": 10000
+      "gap": 10000,
+      "data_analysis": 10000,
+      "generate": 40000
     }
   },
   "default_models": {
