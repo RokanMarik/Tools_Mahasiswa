@@ -19,8 +19,8 @@ class TestIntegration(unittest.TestCase):
         """Full workflow: search papers, then save selected ones."""
         from modules.search.paper_model import Paper
         mock_search.return_value = [
-            Paper(title="Paper A", authors=["Smith"], year=2024, journal="J1", doi="10.1/a", url="https://a.com", source="crossref", abstract=""),
-            Paper(title="Paper B", authors=["Doe"], year=2023, journal="J2", doi="10.2/b", url="https://b.com", source="crossref", abstract=""),
+            Paper(title="Paper A", authors=["Smith"], year=2024, journal="J1", doi="10.1/a", url="https://a.com", source="openalex", abstract=""),
+            Paper(title="Paper B", authors=["Doe"], year=2023, journal="J2", doi="10.2/b", url="https://b.com", source="openalex", abstract=""),
         ]
 
         mock_client = MagicMock()

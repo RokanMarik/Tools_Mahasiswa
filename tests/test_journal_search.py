@@ -57,11 +57,11 @@ class TestJournalSearch(unittest.TestCase):
         from modules.search.paper_model import Paper
         from scripts.journal_search import _paper_to_dict
 
-        paper = Paper(title="Test", authors=["A"], year=2024, journal="J", doi="10.1/x", url="http://x.com", source="crossref", abstract="abs")
+        paper = Paper(title="Test", authors=["A"], year=2024, journal="J", doi="10.1/x", url="http://x.com", source="openalex", abstract="abs")
         result = _paper_to_dict(paper, 1)
         self.assertEqual(result["index"], 1)
         self.assertEqual(result["title"], "Test")
-        self.assertEqual(result["metadata_source"], "crossref")
+        self.assertEqual(result["metadata_source"], "openalex")
 
 
 if __name__ == "__main__":
