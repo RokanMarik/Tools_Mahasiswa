@@ -13,4 +13,5 @@ class Paper:
     url: str
     source: str
     abstract: str = ""
+    citation_count: int = 0
     relevance_score: float = 0.0
