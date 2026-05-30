@@ -1,13 +1,29 @@
 """Aggregator: merge, deduplicate, and sort papers from multiple sources."""
 
 from .paper_model import Paper
-from . import garuda, crossref, semantic_scholar, searxng
+from . import openalex, garuda
+from .scoring import sort_papers
 
-SOURCES = [garuda, crossref, semantic_scholar, searxng]
+SOURCES = [openalex, garuda]
 
 
-def search(topic: str, total_limit: int = 3, per_source_limit: int = 5) -> list[Paper]:
-    """Search all sources and return deduplicated, sorted results."""
+def search(
+    topic: str,
+    total_limit: int = 3,
+    per_source_limit: int = 5,
+    sort_by: str = "composite",
+) -> list[Paper]:
+    """Search all sources and return deduplicated, sorted results.
+
+    Args:
+        topic: Search query.
+        total_limit: Max papers to return.
+        per_source_limit: Max papers per source.
+        sort_by: Sort criterion (composite, citations, year, relevance).
+
+    Returns:
+        Sorted, deduplicated list of Paper objects.
+    """
     all_papers: list[Paper] = []
 
     for source_module in SOURCES:
@@ -21,17 +37,17 @@ def search(topic: str, total_limit: int = 3, per_source_limit: int = 5) -> list[
         raise RuntimeError(f"No results from any source for query: {topic}")
 
     papers = _deduplicate(all_papers)
-    papers = _sort_and_score(papers, topic)
+    papers = sort_papers(papers, sort_by=sort_by)
     return papers[:total_limit]
 
 
 def _deduplicate(papers: list[Paper]) -> list[Paper]:
-    """Remove duplicate papers by DOI, then by title. Priority: Garuda > CrossRef > Semantic Scholar."""
+    """Remove duplicate papers by DOI, then by title. Priority: Garuda > OpenAlex."""
     seen_dois: set[str] = set()
     seen_titles: set[str] = set()
     result: list[Paper] = []
 
-    source_priority = {"garuda": 0, "crossref": 1, "semantic_scholar": 2, "searxng": 3}
+    source_priority = {"garuda": 0, "openalex": 1}
     papers.sort(key=lambda p: source_priority.get(p.source, 99))
 
     for paper in papers:
@@ -51,28 +67,3 @@ def _deduplicate(papers: list[Paper]) -> list[Paper]:
         result.append(paper)
 
     return result
-
-
-def _sort_and_score(papers: list[Paper], topic: str) -> list[Paper]:
-    """Score and sort papers by relevance."""
-    topic_words = set(topic.lower().split())
-
-    for paper in papers:
-        score = 0.0
-        if paper.doi:
-            score += 1
-        if paper.authors:
-            score += 1
-        if paper.year:
-            score += 1
-            if paper.year >= 2021:
-                score += 1
-        if paper.title:
-            title_words = set(paper.title.lower().split())
-            score += len(topic_words & title_words)
-        if paper.source == "garuda":
-            score += 0.5
-        paper.relevance_score = score
-
-    papers.sort(key=lambda p: p.relevance_score, reverse=True)
-    return papers
