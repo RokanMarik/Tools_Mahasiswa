@@ -70,9 +70,16 @@ If any step fails:
 ## Integration Notes
 
 This skill references:
-- `journal-finder` skill for search logic
-- `zotero` skill for save/citation logic
+- `journal-finder` skill for search logic (scripts: `scripts/journal_search.py`)
+- `zotero` skill for save/citation logic (scripts: `scripts/zotero_save.py`, `scripts/citation_generator.py`)
 - Do NOT duplicate code from those skills — reference them
+
+## Script Paths
+
+All scripts are in the project root directory:
+- Search: `python scripts/journal_search.py --topic "<topic>" --limit 3`
+- Save: `python scripts/zotero_save.py --api-key "$ZOTERO_API_KEY" --papers '<json>'`
+- Citation: `python scripts/citation_generator.py --papers '<json>' --style apa`
 
 ## Example Conversation
 

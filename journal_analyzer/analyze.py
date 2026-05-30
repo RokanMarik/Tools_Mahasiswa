@@ -19,6 +19,11 @@ from pathlib import Path
 
 
 def main():
+    # Add journal_analyzer/ to sys.path so bare imports work
+    _ja_dir = Path(__file__).parent
+    if str(_ja_dir) not in sys.path:
+        sys.path.insert(0, str(_ja_dir))
+
     parser = argparse.ArgumentParser(description="Journal Analysis System")
     parser.add_argument("input", nargs="?", help="PDF file or URL/DOI")
     parser.add_argument("--mode", required=True, choices=["read", "review", "full", "gap", "data-analysis", "generate", "compare"], help="Analysis mode")
@@ -142,13 +147,17 @@ def main():
 
 
 def _load_config() -> dict:
-    config_path = Path("analyze.config.json")
-    if config_path.exists():
-        with open(config_path, "r") as f:
-            return json.load(f)
+    # Try multiple locations for config
+    for config_path in [
+        Path("analyze.config.json"),
+        Path(__file__).parent / "analyze.config.json",
+    ]:
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                return json.load(f)
     return {
         "token_budget": {"daily_limit": 50000, "per_task": {"read": 5000, "review": 15000, "full": 30000}},
-        "default_models": {"light": "google/gemini-2.0-flash", "medium": "anthropic/claude-sonnet-4-20250514", "heavy": "anthropic/claude-opus-4-20250514"},
+        "default_models": {"light": "gc/gemini-3-flash-preview", "medium": "gc/gemini-3-pro-preview", "heavy": "qd/ultimate"},
         "cache_ttl_days": 7,
     }
 
@@ -185,7 +194,6 @@ def _parse_input(args) -> "StructuredArticleData":
 def _run_reader(article, cache, content_hash, config, router):
     from workers.reader_worker import ReaderWorker
 
-    # Check analysis cache
     cached = cache.get_analysis(content_hash, "reader")
     if cached:
         return {"status": "success", "data": cached}

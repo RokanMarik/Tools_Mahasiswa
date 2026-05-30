@@ -11,9 +11,9 @@
     }
   },
   "default_models": {
-    "light": "google/gemini-2.0-flash",
-    "medium": "anthropic/claude-sonnet-4-20250514",
-    "heavy": "anthropic/claude-opus-4-20250514"
+    "light": "gc/gemini-3-flash-preview",
+    "medium": "gc/gemini-3-pro-preview",
+    "heavy": "qd/ultimate"
   },
   "cache_ttl_days": 7,
   "output_language": "id",

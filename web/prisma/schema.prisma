@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RumpunBahasa {
+  id              String       @id @default(uuid()) @db.Uuid
+  namaRumpun      String       @map("nama_rumpun") @db.VarChar(100)
+  subRumpun       String?      @map("sub_rumpun") @db.VarChar(100)
+  parentId        String?      @map("parent_id") @db.Uuid
+  parent          RumpunBahasa? @relation("RumpunHierarchy", fields: [parentId], references: [id])
+  children        RumpunBahasa[] @relation("RumpunHierarchy")
+  levelTaksonomi  Int?         @map("level_taksonomi")
+  referensi       String?      @map("referensi") @db.Text
+  dibuatPada      DateTime     @default(now()) @map("dibuat_pada")
+  diperbaruiPada  DateTime     @default(now()) @updatedAt @map("diperbarui_pada")
+  bahasa          Bahasa[]
+
+  @@map("rumpun_bahasa")
+}
+
+model Bahasa {
+  id                 String            @id @default(uuid()) @db.Uuid
+  namaBahasa         String            @map("nama_bahasa") @db.VarChar(150)
+  namaLokal          String?           @map("nama_lokal") @db.VarChar(150)
+  kodeIso639         String?           @unique @map("kode_iso_639") @db.Char(3)
+  rumpunId           String?           @map("rumpun_id") @db.Uuid
+  rumpun             RumpunBahasa?     @relation(fields: [rumpunId], references: [id])
+  jumlahPenutur      Int?              @map("jumlah_penutur")
+  statusVitalitas    String?           @map("status_vitalitas") @db.VarChar(30)
+  tanggalDokumentasi DateTime?         @map("tanggal_dokumentasi") @db.Date
+  koordinatPusat     Json?             @map("koordinat_pusat")
+  geojsonWilayah     Json?             @map("geojson_wilayah")
+  catatan            String?           @map("catatan") @db.Text
+  autoSummary        String?           @map("auto_summary") @db.Text
+  dibuatPada         DateTime          @default(now()) @map("dibuat_pada")
+  diperbaruiPada     DateTime          @default(now()) @updatedAt @map("diperbarui_pada")
+  lokasi             Lokasi[]
+  fiturLinguistik    FiturLinguistik?
+  kosakata           Kosakata[]
+  statusPreservasi   StatusPreservasi?
+  manuskrip          Manuskrip[]
+
+  @@index([kodeIso639])
+  @@index([statusVitalitas])
+  @@index([rumpunId])
+  @@map("bahasa")
+}
+
+model Lokasi {
+  id             String   @id @default(uuid()) @db.Uuid
+  bahasaId       String   @map("bahasa_id") @db.Uuid
+  bahasa         Bahasa   @relation(fields: [bahasaId], references: [id], onDelete: Cascade)
+  provinsi       String?  @db.VarChar(100)
+  kabupaten      String?  @db.VarChar(100)
+  kecamatan      String?  @db.VarChar(100)
+  tipeWilayah    String?  @map("tipe_wilayah") @db.VarChar(30)
+  polygonGeojson Json?    @map("polygon_geojson")
+  luasKm2        Decimal? @map("luas_km2") @db.Decimal(12, 2)
+  dibuatPada     DateTime @default(now()) @map("dibuat_pada")
+
+  @@index([bahasaId])
+  @@map("lokasi")
+}
+
+model FiturLinguistik {
+  id               String   @id @default(uuid()) @db.Uuid
+  bahasaId         String   @unique @map("bahasa_id") @db.Uuid
+  bahasa           Bahasa   @relation(fields: [bahasaId], references: [id], onDelete: Cascade)
+  sistemTulisan    String?  @map("sistem_tulisan") @db.VarChar(60)
+  tipeMorfologi    String?  @map("tipe_morfologi") @db.VarChar(30)
+  urutanKata       String?  @map("urutan_kata") @db.Char(3)
+  jumlahVokal      Int?     @map("jumlah_vokal")
+  jumlahKonsonan   Int?     @map("jumlah_konsonan")
+  memilikiNada     Boolean  @default(false) @map("memiliki_nada")
+  memilikiRegister Boolean  @default(false) @map("memiliki_register")
+  catatanFonologi  String?  @map("catatan_fonologi") @db.Text
+  dibuatPada       DateTime @default(now()) @map("dibuat_pada")
+  diperbaruiPada   DateTime @default(now()) @updatedAt @map("diperbarui_pada")
+
+  @@map("fitur_linguistik")
+}
+
+model Kosakata {
+  id              String   @id @default(uuid()) @db.Uuid
+  bahasaId        String   @map("bahasa_id") @db.Uuid
+  bahasa          Bahasa   @relation(fields: [bahasaId], references: [id], onDelete: Cascade)
+  kata            String   @db.VarChar(200)
+  artiIndonesia   String   @map("arti_indonesia") @db.VarChar(200)
+  fonetikIpa      String?  @map("fonetik_ipa") @db.VarChar(200)
+  dalamSwadesh    Boolean  @default(false) @map("dalam_swadesh")
+  nomorSwadesh    Int?     @map("nomor_swadesh")
+  audioUrl        String?  @map("audio_url")
+  catatan         String?  @db.Text
+  dibuatPada      DateTime @default(now()) @map("dibuat_pada")
+
+  @@index([bahasaId])
+  @@index([bahasaId, dalamSwadesh])
+  @@map("kosakata")
+}
+
+model StatusPreservasi {
+  id               String   @id @default(uuid()) @db.Uuid
+  bahasaId         String   @unique @map("bahasa_id") @db.Uuid
+  bahasa           Bahasa   @relation(fields: [bahasaId], references: [id], onDelete: Cascade)
+  skalaUnesco      Int?     @map("skala_unesco")
+  ancamanUtama     String[] @map("ancaman_utama")
+  programAktif     String?  @map("program_aktif") @db.Text
+  lembagaPelestari String?  @map("lembaga_pelestari") @db.VarChar(200)
+  tahunPenilaian   Int?     @map("tahun_penilaian")
+  urlLaporan       String?  @map("url_laporan")
+  dibuatPada       DateTime @default(now()) @map("dibuat_pada")
+  diperbaruiPada   DateTime @default(now()) @updatedAt @map("diperbarui_pada")
+
+  @@map("status_preservasi")
+}
+
+model Manuskrip {
+  id              String   @id @default(uuid()) @db.Uuid
+  bahasaId        String   @map("bahasa_id") @db.Uuid
+  bahasa          Bahasa   @relation(fields: [bahasaId], references: [id], onDelete: Cascade)
+  judul           String   @db.VarChar(300)
+  abad            String?  @db.VarChar(20)
+  jenisAksara     String?  @map("jenis_aksara") @db.VarChar(100)
+  bahasaDigunakan String?  @map("bahasa_digunakan") @db.VarChar(100)
+  lokasiSimpan    String?  @map("lokasi_simpan") @db.VarChar(200)
+  kondisi         String?  @db.VarChar(20)
+  urlDigitalisasi String?  @map("url_digitalisasi")
+  catatan         String?  @db.Text
+  dibuatPada      DateTime @default(now()) @map("dibuat_pada")
+
+  @@index([bahasaId])
+  @@map("manuskrip")
+}
