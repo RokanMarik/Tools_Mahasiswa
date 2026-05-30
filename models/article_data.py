@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any
 
 
 @dataclass
@@ -8,19 +10,19 @@ class Chunk:
     section: str
     text: str
     index: int
-    analysis_result: Optional[str] = None
+    analysis_result: str | None = None
 
 
 @dataclass
 class StructuredArticleData:
     """Shared data model that all parsers produce and all workers consume."""
-    metadata: dict = field(default_factory=dict)
-    sections: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    sections: dict[str, str] = field(default_factory=dict)
     methodology_type: str = "unknown"
     research_gap: str = ""
-    key_findings: list = field(default_factory=list)
-    statistical_methods: list = field(default_factory=list)
-    chunks: list = field(default_factory=list)
+    key_findings: list[str] = field(default_factory=list)
+    statistical_methods: list[str] = field(default_factory=list)
+    chunks: list[Chunk] = field(default_factory=list)
     raw_text: str = ""
 
     def get_section(self, name: str) -> str:
@@ -39,6 +41,6 @@ class StructuredArticleData:
         """Count total words across all sections."""
         return sum(len(text.split()) for text in self.sections.values())
 
-    def add_chunks(self, chunks: list) -> None:
+    def add_chunks(self, chunks: list[Chunk]) -> None:
         """Add chunks for long document processing."""
         self.chunks = chunks
