@@ -272,5 +272,41 @@ More research needed.
     assert "8/10" in output
 
 
+def test_compare_pipeline():
+    """Test: parse multiple papers → comparison → aggregate."""
+    from unittest.mock import patch
+    text1 = """## ABSTRACT
+Paper 1 about AI in education using quantitative method."""
+    text2 = """## ABSTRACT
+Paper 2 about AI in education using qualitative method."""
+
+    from parsers.text_parser import TextParser
+    article1 = TextParser().parse(text1)
+    article2 = TextParser().parse(text2)
+
+    from workers.comparison_worker import ComparisonWorker
+    from core.output_aggregator import OutputAggregator
+
+    comp_text = "TABEL PERBANDINGAN:\nPaper 1: Kuantitatif\nPaper 2: Kualitatif\n\nSYNTHESIS: Both show positive impact."
+
+    with patch.object(ComparisonWorker, "_chat", return_value=comp_text):
+        worker = ComparisonWorker(prompts_dir="journal_analyzer/prompts")
+        papers = [
+            {"title": article1.metadata.get("title", "Paper 1"), "summary": article1.sections.get("abstract", "")},
+            {"title": article2.metadata.get("title", "Paper 2"), "summary": article2.sections.get("abstract", "")},
+        ]
+        result = worker.run(papers)
+        assert result is not None
+        assert "comparison" in result
+
+    agg = OutputAggregator()
+    output = agg.aggregate({
+        "comparison": {"status": "success", "data": result},
+    })
+    assert "## Perbandingan Paper" in output
+    assert "Kuantitatif" in output
+    assert "Kualitatif" in output
+
+
 if __name__ == "__main__":
     unittest.main()
