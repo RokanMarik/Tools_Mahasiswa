@@ -269,6 +269,38 @@ Format dalam bentuk yang siap digunakan untuk pencarian."""
         engine = RecommendationEngine(self)
         return engine.recommend(gaps, existing_topics)
 
+    def create_zotero_collection(self, api_key: str, name: str, parent_key: str = None) -> Dict:
+        """Create a new Zotero collection.
+
+        Args:
+            api_key: Zotero API key.
+            name: Collection name.
+            parent_key: Parent collection key (None for top-level).
+
+        Returns:
+            {key, name, version}.
+        """
+        client = ZoteroClient(api_key=api_key)
+        client.library_id = client.get_user_id()
+        return client.create_collection(name, parent_key)
+
+    def add_item_to_zotero_collection(
+        self, api_key: str, collection_key: str, item_data: Dict
+    ) -> Dict:
+        """Add an item to a Zotero collection.
+
+        Args:
+            api_key: Zotero API key.
+            collection_key: Target collection key.
+            item_data: Dict with title, authors/creators, date, doi, url, journal, itemType.
+
+        Returns:
+            {key, version}.
+        """
+        client = ZoteroClient(api_key=api_key)
+        client.library_id = client.get_user_id()
+        return client.add_item(collection_key, item_data)
+
 
 def main():
     """

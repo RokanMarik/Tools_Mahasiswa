@@ -153,3 +153,134 @@ class ZoteroClient:
             start += limit
 
         return all_items
+
+    def _post(self, endpoint: str, payload: List[Dict]) -> requests.Response:
+        """Make POST request with retry on rate limit."""
+        url = f"{self.base_url}/{endpoint}"
+
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.post(
+                    url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=30,
+                )
+
+                if response.status_code == 503:
+                    if attempt < MAX_RETRIES - 1:
+                        print(f"  Rate limited. Waiting {RETRY_DELAY}s...")
+                        time.sleep(RETRY_DELAY)
+                        continue
+                    else:
+                        raise Exception("Rate limited after 3 retries.")
+
+                response.raise_for_status()
+                return response
+
+            except requests.exceptions.ConnectionError:
+                raise Exception("Tidak bisa terhubung ke Zotero API. Cek koneksi internet.")
+            except requests.exceptions.Timeout:
+                raise Exception("Request timeout. Cek koneksi internet.")
+
+        raise Exception("Unexpected error in request.")
+
+    def create_collection(self, name: str, parent_key: str = None) -> Dict:
+        """Create a new collection.
+
+        Args:
+            name: Collection name.
+            parent_key: Parent collection key (None for top-level).
+
+        Returns:
+            {key, name, version}.
+        """
+        library_path = f"{self.library_type}/{self.library_id}"
+        endpoint = f"{library_path}/collections"
+
+        payload = [{
+            "name": name,
+            "parentCollection": parent_key or "",
+        }]
+
+        response = self._post(endpoint, payload)
+        result = response.json()
+
+        # Zotero batch API returns {successful: {idx: {key, version, ...}}}
+        successful = result.get("successful", {})
+        if successful:
+            first_key = list(successful.keys())[0]
+            item = successful[first_key]
+            return {
+                "key": item.get("key", ""),
+                "name": name,
+                "version": item.get("version", 0),
+            }
+
+        # Fallback: check for errors
+        failed = result.get("failed", {})
+        if failed:
+            first_fail = list(failed.values())[0]
+            raise Exception(f"Failed: {first_fail.get('message', 'Unknown error')}")
+
+        raise Exception("Failed to create collection — unexpected API response.")
+
+    def add_item(self, collection_key: str, item_data: Dict) -> Dict:
+        """Add a single item to a collection.
+
+        Args:
+            collection_key: Target collection key.
+            item_data: Dict with keys: title, itemType, creators, date, DOI, url, publicationTitle.
+
+        Returns:
+            {key, version}.
+        """
+        library_path = f"{self.library_type}/{self.library_id}"
+        endpoint = f"{library_path}/items"
+
+        # Build creators format
+        creators = []
+        for author_name in item_data.get("creators", item_data.get("authors", [])):
+            parts = author_name.strip().split()
+            if len(parts) >= 2:
+                creators.append({
+                    "creatorType": "author",
+                    "firstName": " ".join(parts[:-1]),
+                    "lastName": parts[-1],
+                })
+            else:
+                creators.append({
+                    "creatorType": "author",
+                    "lastName": author_name,
+                })
+
+        payload = [{
+            "itemType": item_data.get("itemType", "journalArticle"),
+            "title": item_data.get("title", ""),
+            "creators": creators,
+            "date": item_data.get("date", ""),
+            "DOI": item_data.get("doi", item_data.get("DOI", "")),
+            "url": item_data.get("url", ""),
+            "publicationTitle": item_data.get("journal", item_data.get("publicationTitle", "")),
+            "collections": [collection_key],
+        }]
+
+        response = self._post(endpoint, payload)
+        result = response.json()
+
+        # Zotero batch API returns {successful: {idx: {key, version, ...}}}
+        successful = result.get("successful", {})
+        if successful:
+            first_key = list(successful.keys())[0]
+            item = successful[first_key]
+            return {
+                "key": item.get("key", ""),
+                "version": item.get("version", 0),
+            }
+
+        failed = result.get("failed", {})
+        if failed:
+            first_fail = list(failed.values())[0]
+            raise Exception(f"Failed: {first_fail.get('message', 'Unknown error')}")
+
+        raise Exception("Failed to add item — unexpected API response.")
