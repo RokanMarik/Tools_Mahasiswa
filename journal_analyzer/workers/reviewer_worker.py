@@ -13,7 +13,7 @@ class ReviewerWorker:
         self,
         ninerouter_url: str | None = None,
         ninerouter_key: str | None = None,
-        prompts_dir: str = "prompts",
+        prompts_dir: str = "journal_analyzer/prompts",
     ):
         self.ninerouter_url = ninerouter_url or os.getenv("NINEROUTER_URL", "http://localhost:20128")
         self.ninerouter_key = ninerouter_key or os.getenv("NINEROUTER_KEY", "")

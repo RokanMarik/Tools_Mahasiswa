@@ -41,7 +41,7 @@ More research is needed on long-term effects.
     reader_summary = "LATAR BELAKANG: AI di pendidikan sedang berkembang.\nTUJUAN: Meneliti dampak AI.\nMETODE: Survei 500 guru.\nHASIL: 80% engagement meningkat.\nIMPLIKASI: AI berdampak positif."
 
     with patch.object(ReaderWorker, "_chat", return_value=reader_summary):
-        reader = ReaderWorker(prompts_dir="prompts")
+        reader = ReaderWorker(prompts_dir="journal_analyzer/prompts")
         reader_result = reader.run(article)
         assert reader_result is not None
         assert "summary" in reader_result
@@ -51,7 +51,7 @@ More research is needed on long-term effects.
     review_text = "OVERALL ASSESSMENT: Minor Revision\n\nKEKUATAN:\n1. Metodologi jelas\n2. Sample size cukup\n\nMASALAH MINOR:\n1. Tambahkan effect size"
 
     with patch.object(ReviewerWorker, "_chat", return_value=review_text):
-        reviewer = ReviewerWorker(prompts_dir="prompts")
+        reviewer = ReviewerWorker(prompts_dir="journal_analyzer/prompts")
         reviewer_result = reviewer.run(article, reader_summary=reader_summary)
         assert reviewer_result is not None
         assert reviewer_result["assessment"] == "Minor Revision"
