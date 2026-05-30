@@ -8,6 +8,7 @@ import os
 import requests
 from typing import List, Dict, Optional
 from modules.search_cache import SearchCache
+from academic_apis import search_academic_papers
 
 
 class SimpleJournalFinder:
@@ -19,19 +20,13 @@ class SimpleJournalFinder:
     - ~100-200 tokens per query
     """
     
-    def __init__(self, ninerouter_url: str = None, ninerouter_key: str = None):
+    def __init__(self):
         """Initialize simple journal finder"""
-        self.ninerouter_url = ninerouter_url or os.getenv("NINEROUTER_URL", "http://localhost:20128")
-        self.ninerouter_key = ninerouter_key or os.getenv("NINEROUTER_KEY", "")
         self.cache = SearchCache()
-        self.headers = {
-            "Authorization": f"Bearer {self.ninerouter_key}",
-            "Content-Type": "application/json"
-        }
     
     def search(self, topic: str, context: str = "") -> List[Dict]:
         """
-        Search for journals (token-efficient)
+        Search for journals using FREE academic APIs (arXiv, PubMed, CORE)
         
         Args:
             topic: Main topic (e.g., "sriwijaya")
@@ -40,38 +35,22 @@ class SimpleJournalFinder:
         Returns:
             List of 3 papers with title and URL
         """
-        # Build simple query (no chat call - save tokens)
-        query = f"{topic} {context} open access".strip()
+        # Build simple query
+        query = f"{topic} {context}".strip()
         
         # Check cache first
-        cache_key = f"simple:{query}"
+        cache_key = f"academic:{query}"
         cached = self.cache.get(cache_key)
         if cached:
             print(f"[CACHE HIT] {query}")
             return cached[:3]  # Return only 3
         
         print(f"[SEARCHING] {query}")
-        
-        # Search via 9router
-        url = f"{self.ninerouter_url}/v1/search"
-        payload = {
-            "model": "tavily/search",
-            "query": query,
-            "limit": 3  # Only 3 papers
-        }
+        print(f"[SOURCES] arXiv + PubMed + CORE (FREE APIs)")
         
         try:
-            response = requests.post(url, headers=self.headers, json=payload, timeout=15)
-            response.raise_for_status()
-            result = response.json()
-            
-            # Extract papers
-            papers = []
-            for item in result.get("results", [])[:3]:  # Limit to 3
-                papers.append({
-                    "title": item.get("title", "Untitled"),
-                    "url": item.get("url", "")
-                })
+            # Search using free academic APIs
+            papers = search_academic_papers(query, max_results=3)
             
             # Cache results
             self.cache.set(cache_key, papers)
