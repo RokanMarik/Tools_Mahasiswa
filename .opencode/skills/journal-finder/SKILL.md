@@ -15,6 +15,12 @@ Natural language detection:
 - "search for journals on [topic]"
 - "cari paper tentang [topik]"
 
+**Multi-source search:** This skill searches three free APIs simultaneously:
+- **Garuda** (garuda.ristekbrin.go.id) — Indonesian academic journals
+- **CrossRef** (api.crossref.org) — Global journal database
+- **Semantic Scholar** (api.semanticscholar.org) — Global research papers
+Results are merged, deduplicated by DOI, and sorted by relevance. No API keys needed.
+
 ## Workflow
 
 1. **Parse topic** from user request

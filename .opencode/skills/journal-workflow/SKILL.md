@@ -20,6 +20,7 @@ Natural language detection:
 ### Full Pipeline
 ```
 1. Search    → journal-finder skill (scripts/journal_search.py)
+               Multi-source: Garuda + CrossRef + Semantic Scholar (merged, deduped by DOI)
 2. Display   → Show papers with numbers
 3. Review    → User picks which papers to save
 4. Save      → zotero skill (scripts/zotero_save.py)
