@@ -65,3 +65,30 @@ def test_parse_short_text_warning():
     parser = TextParser()
     article = parser.parse(text)
     assert article.metadata.get("warning") is not None
+
+
+from unittest.mock import patch, MagicMock
+from parsers.url_fetcher import URLFetcher
+
+
+def test_fetch_url_success():
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "choices": [{"message": {"content": "## ABSTRACT\nTest abstract.\n\n## INTRODUCTION\nTest intro."}}]
+    }
+    with patch("parsers.url_fetcher.requests.post", return_value=mock_response):
+        fetcher = URLFetcher(ninerouter_url="http://localhost:20128", ninerouter_key="test-key")
+        article = fetcher.fetch("https://doi.org/10.1234/test")
+        assert article.metadata["source_type"] == "url"
+        assert article.sections["abstract"] == "Test abstract."
+
+
+def test_fetch_invalid_url():
+    with patch("parsers.url_fetcher.requests.post") as mock_post:
+        mock_post.side_effect = Exception("Connection refused")
+        fetcher = URLFetcher(ninerouter_url="http://localhost:20128", ninerouter_key="test-key")
+        try:
+            fetcher.fetch("https://invalid-url-xyz.com")
+            assert False, "Should raise"
+        except Exception as e:
+            assert "Connection refused" in str(e)
