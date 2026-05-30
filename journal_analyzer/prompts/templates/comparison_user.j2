@@ -1,0 +1,12 @@
+{# journal_analyzer/prompts/templates/comparison_user.j2 #}
+Bandingkan paper-paper berikut:
+
+{% for paper in papers %}
+--- Paper {{ loop.index }}: {{ paper.title }} ---
+{% if paper.summary %}Ringkasan: {{ paper.summary }}{% endif %}
+{% if paper.methodology %}Metodologi: {{ paper.methodology }}{% endif %}
+{% if paper.key_findings %}Temuan: {{ paper.key_findings | join(', ') }}{% endif %}
+
+{% endfor %}
+
+Berikan analisis perbandingan sesuai format yang ditentukan.
