@@ -199,5 +199,78 @@ def test_data_analysis_pipeline():
     assert "H0 ditolak" in output
 
 
+def test_generate_pipeline():
+    """Test: parse → reader → gap analyzer → generator → self-review → aggregate."""
+    from unittest.mock import patch
+    text = """## ABSTRACT
+This study examines AI use in education.
+
+## INTRODUCTION
+AI is transforming education.
+
+## METHODOLOGY
+Survey of 500 teachers.
+
+## RESULTS
+75% reported improved engagement.
+
+## CONCLUSION
+More research needed.
+"""
+    from parsers.text_parser import TextParser
+    parser = TextParser()
+    article = parser.parse(text)
+
+    from workers.reader_worker import ReaderWorker
+    from workers.gap_analyzer_worker import GapAnalyzerWorker
+    from workers.generator_worker import GeneratorWorker
+    from workers.self_review_worker import SelfReviewWorker
+    from core.output_aggregator import OutputAggregator
+
+    # Mock reader
+    with patch.object(ReaderWorker, "_chat", return_value="AI improves engagement."):
+        reader = ReaderWorker(prompts_dir="journal_analyzer/prompts")
+        reader_result = reader.run(article)
+
+    # Mock gap analyzer
+    with patch.object(GapAnalyzerWorker, "_chat", return_value="GAP: Longitudinal studies needed."):
+        gap_worker = GapAnalyzerWorker(prompts_dir="journal_analyzer/prompts")
+        gap_result = gap_worker.run(article, reader_summary="AI improves engagement.")
+
+    # Mock generator
+    draft = "# DRAFT ARTIKEL\n\n## ABSTRAK\nAI in education improves engagement.\n\n## DATA DIBUTUHKAN: Empirical results."
+    with patch.object(GeneratorWorker, "_chat", return_value=draft):
+        gen_worker = GeneratorWorker(prompts_dir="journal_analyzer/prompts")
+        gen_result = gen_worker.run(
+            research_topic="AI in Education",
+            reader_summaries=["AI improves engagement."],
+            gap_analysis="GAP: Longitudinal studies needed.",
+        )
+        assert gen_result is not None
+        assert "draft" in gen_result
+
+    # Mock self-review
+    review = "QUALITY SCORE: 8/10\n\nSTRENGTHS: Good structure.\nISSUES: Need to fill data placeholders."
+    with patch.object(SelfReviewWorker, "_chat", return_value=review):
+        review_worker = SelfReviewWorker(prompts_dir="journal_analyzer/prompts")
+        review_result = review_worker.run(draft_article=draft, research_topic="AI in Education")
+        assert review_result is not None
+        assert "review" in review_result
+
+    # Aggregate
+    agg = OutputAggregator()
+    output = agg.aggregate({
+        "reader": {"status": "success", "data": reader_result},
+        "gap_analyzer": {"status": "success", "data": gap_result},
+        "generator": {"status": "success", "data": gen_result},
+        "self_review": {"status": "success", "data": review_result},
+    })
+    assert "# Ringkasan Jurnal" in output
+    assert "## Research Gap" in output
+    assert "## Draft Artikel" in output
+    assert "## Self-Review" in output
+    assert "8/10" in output
+
+
 if __name__ == "__main__":
     unittest.main()
