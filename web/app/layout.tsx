@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Peta Bahasa Indonesia",
-  description: "Peta interaktif persebaran bahasa daerah di Indonesia. Jelajahi 700+ bahasa dari Aceh sampai Papua.",
+  title: "Nusantara Basa — Peta Interaktif Bahasa Indonesia",
+  description: "Jelajahi persebaran bahasa daerah Indonesia dari Aceh sampai Papua. Temukan keragaman linguistik Nusantara.",
 };
 
 export default function RootLayout({
