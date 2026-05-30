@@ -1,16 +1,50 @@
 "use client";
 
 import { Marker, Popup, useMap } from "react-leaflet";
-import { Icon } from "leaflet";
+import { DivIcon } from "leaflet";
 import { MapPopup } from "./MapPopup";
 import type { BahasaMarker } from "@/lib/types";
 
-function createMarkerIcon(rumpunNama: string | null): Icon {
-  const color = rumpunNama === "Papua" ? "#8b3a3a" : rumpunNama === "Trans-New Guinea" ? "#5a7247" : "#c4703f";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="${color}" stroke="white" stroke-width="1.5"/><circle cx="12" cy="12" r="5" fill="white" opacity="0.9"/></svg>`;
-  return new Icon({
-    iconUrl: `data:image/svg+xml;base64,${btoa(svg)}`,
-    iconSize: [24, 36], iconAnchor: [12, 36], popupAnchor: [0, -36],
+function getMarkerColor(rumpunNama: string | null): string {
+  if (rumpunNama === "Papua") return "#8b3a3a";
+  if (rumpunNama === "Trans-New Guinea") return "#5a7247";
+  return "#c4703f";
+}
+
+function getVitalitasSize(jumlahPenutur: number | null): number {
+  if (!jumlahPenutur) return 10;
+  if (jumlahPenutur >= 50000000) return 18;
+  if (jumlahPenutur >= 10000000) return 15;
+  if (jumlahPenutur >= 1000000) return 12;
+  return 10;
+}
+
+function createModernIcon(rumpunNama: string | null, jumlahPenutur: number | null, statusVitalitas: string | null): DivIcon {
+  const color = getMarkerColor(rumpunNama);
+  const size = getVitalitasSize(jumlahPenutur);
+  const isCritical = statusVitalitas === "kritis" || statusVitalitas === "sangat terancam";
+
+  const html = `
+    <div style="position: relative; width: ${size + 12}px; height: ${size + 12}px;">
+      ${isCritical ? `<div style="position: absolute; inset: 0; border-radius: 50%; background: ${color}; opacity: 0.3; animation: pulse 2s ease-in-out infinite;"></div>` : ""}
+      <div style="
+        position: absolute;
+        top: 6px; left: 6px;
+        width: ${size}px; height: ${size}px;
+        border-radius: 50%;
+        background: ${color};
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.1);
+      "></div>
+    </div>
+  `;
+
+  return new DivIcon({
+    html,
+    className: "modern-marker",
+    iconSize: [size + 12, size + 12],
+    iconAnchor: [(size + 12) / 2, (size + 12) / 2],
+    popupAnchor: [0, -(size + 12) / 2],
   });
 }
 
@@ -18,9 +52,23 @@ export function LanguageMarkers({ markers }: { markers: BahasaMarker[] }) {
   const map = useMap();
   return (
     <>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.8); opacity: 0; }
+        }
+        .modern-marker { background: none !important; border: none !important; }
+        .leaflet-popup-content-wrapper { border-radius: 12px !important; }
+      `}</style>
       {markers.map((m) => (
-        <Marker key={m.id} position={[m.lat, m.lng]} icon={createMarkerIcon(m.rumpunNama)}
-          eventHandlers={{ click: () => { map.flyTo([m.lat, m.lng], 8, { duration: 1 }); } }}>
+        <Marker
+          key={m.id}
+          position={[m.lat, m.lng]}
+          icon={createModernIcon(m.rumpunNama, m.jumlahPenutur, m.statusVitalitas)}
+          eventHandlers={{
+            click: () => { map.flyTo([m.lat, m.lng], 8, { duration: 1 }); },
+          }}
+        >
           <Popup><MapPopup marker={m} /></Popup>
         </Marker>
       ))}
