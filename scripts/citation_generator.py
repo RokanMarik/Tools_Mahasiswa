@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules.zotero.citation_formatter import CitationFormatter
 
 
-def generate_citations(papers: list, style: str = "apa") -> str:
+def generate_citations(papers: list[dict], style: str = "apa") -> str:
     """Generate citations for papers. Returns JSON string.
 
     Args:
@@ -49,7 +49,7 @@ def generate_citations(papers: list, style: str = "apa") -> str:
             citation_text = formatter.format(item, style=style)
             citations.append({
                 "title": paper.get("title", "Untitled"),
-                "apa": citation_text,
+                style: citation_text,
             })
 
         return json.dumps({
@@ -58,7 +58,7 @@ def generate_citations(papers: list, style: str = "apa") -> str:
             "error": None,
         }, ensure_ascii=False)
 
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         return json.dumps({
             "status": "error",
             "citations": [],
@@ -72,7 +72,11 @@ def main():
     parser.add_argument("--style", default="apa", help="Citation style (apa, ieee, mla, chicago)")
     args = parser.parse_args()
 
-    papers = json.loads(args.papers)
+    try:
+        papers = json.loads(args.papers)
+    except json.JSONDecodeError as e:
+        print(json.dumps({"status": "error", "citations": [], "error": f"Invalid JSON: {e}"}))
+        sys.exit(1)
     if not isinstance(papers, list):
         papers = [papers]
 
