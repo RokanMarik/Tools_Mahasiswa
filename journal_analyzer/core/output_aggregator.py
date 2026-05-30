@@ -30,4 +30,24 @@ class OutputAggregator:
                 parts.append(f"[reviewer] Gagal: {wr.get('error', 'Unknown error')}. Coba lagi nanti.\n")
             parts.append("")
 
+        if "gap_analyzer" in worker_results:
+            ga = worker_results["gap_analyzer"]
+            if ga["status"] == "success":
+                parts.append("## Research Gap\n")
+                parts.append(ga["data"].get("gap_text", "Tidak ada gap teridentifikasi."))
+            else:
+                parts.append("## Research Gap\n")
+                parts.append(f"[gap_analyzer] Gagal: {ga.get('error', 'Unknown error')}. Coba lagi nanti.\n")
+            parts.append("")
+
+        if "data_analysis" in worker_results:
+            da = worker_results["data_analysis"]
+            if da["status"] == "success":
+                parts.append("## Analisis Data\n")
+                parts.append(da["data"].get("interpretation", "Tidak ada interpretasi."))
+            else:
+                parts.append("## Analisis Data\n")
+                parts.append(f"[data_analysis] Gagal: {da.get('error', 'Unknown error')}. Coba lagi nanti.\n")
+            parts.append("")
+
         return "\n".join(parts)

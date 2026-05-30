@@ -36,3 +36,35 @@ def test_format_markdown():
     })
     assert "# Ringkasan Jurnal" in result
     assert "Test summary" in result
+
+
+def test_aggregate_with_gap_analysis():
+    agg = OutputAggregator()
+    result = agg.aggregate({
+        "reader": {"status": "success", "data": {"summary": "Summary."}},
+        "gap_analyzer": {"status": "success", "data": {"gap_text": "Gap: longitudinal study needed."}},
+    })
+    assert "Ringkasan Jurnal" in result
+    assert "Research Gap" in result
+    assert "longitudinal study" in result
+
+
+def test_aggregate_with_data_analysis():
+    agg = OutputAggregator()
+    result = agg.aggregate({
+        "data_analysis": {"status": "success", "data": {"interpretation": "H0 ditolak, p<0.05"}},
+    })
+    assert "Analisis Data" in result
+    assert "H0 ditolak" in result
+
+
+def test_aggregate_all_workers():
+    agg = OutputAggregator()
+    result = agg.aggregate({
+        "reader": {"status": "success", "data": {"summary": "Summary."}},
+        "reviewer": {"status": "success", "data": {"assessment": "Minor Revision", "review_text": "Good paper."}},
+        "gap_analyzer": {"status": "success", "data": {"gap_text": "Gap identified."}},
+    })
+    assert "Ringkasan Jurnal" in result
+    assert "Review Peer" in result
+    assert "Research Gap" in result
