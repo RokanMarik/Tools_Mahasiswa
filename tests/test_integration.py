@@ -9,6 +9,65 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.dirname(__file__))
 
 
+def test_full_pipeline_text_input():
+    """Test: text input → parse → reader → reviewer → aggregate."""
+    text = """## ABSTRACT
+This paper investigates the impact of AI on education.
+
+## INTRODUCTION
+AI is transforming education. This study explores how.
+
+## METHODOLOGY
+We conducted a survey of 500 teachers using quantitative methods.
+
+## RESULTS
+80% of teachers reported improved student engagement.
+
+## DISCUSSION
+Results suggest AI has significant positive impact.
+
+## CONCLUSION
+More research is needed on long-term effects.
+"""
+    # Parse
+    from parsers.text_parser import TextParser
+    parser = TextParser()
+    article = parser.parse(text)
+    assert article.sections["abstract"] == "This paper investigates the impact of AI on education."
+    assert article.word_count > 0
+
+    # Reader (mocked)
+    from workers.reader_worker import ReaderWorker
+    reader_summary = "LATAR BELAKANG: AI di pendidikan sedang berkembang.\nTUJUAN: Meneliti dampak AI.\nMETODE: Survei 500 guru.\nHASIL: 80% engagement meningkat.\nIMPLIKASI: AI berdampak positif."
+
+    with patch.object(ReaderWorker, "_chat", return_value=reader_summary):
+        reader = ReaderWorker(prompts_dir="prompts")
+        reader_result = reader.run(article)
+        assert reader_result is not None
+        assert "summary" in reader_result
+
+    # Reviewer (mocked)
+    from workers.reviewer_worker import ReviewerWorker
+    review_text = "OVERALL ASSESSMENT: Minor Revision\n\nKEKUATAN:\n1. Metodologi jelas\n2. Sample size cukup\n\nMASALAH MINOR:\n1. Tambahkan effect size"
+
+    with patch.object(ReviewerWorker, "_chat", return_value=review_text):
+        reviewer = ReviewerWorker(prompts_dir="prompts")
+        reviewer_result = reviewer.run(article, reader_summary=reader_summary)
+        assert reviewer_result is not None
+        assert reviewer_result["assessment"] == "Minor Revision"
+
+    # Aggregate
+    from core.output_aggregator import OutputAggregator
+    agg = OutputAggregator()
+    output = agg.aggregate({
+        "reader": {"status": "success", "data": reader_result},
+        "reviewer": {"status": "success", "data": reviewer_result},
+    })
+    assert "# Ringkasan Jurnal" in output
+    assert "## Review Peer" in output
+    assert "Minor Revision" in output
+
+
 class TestIntegration(unittest.TestCase):
     """Test full workflow: search → save → citation."""
 
