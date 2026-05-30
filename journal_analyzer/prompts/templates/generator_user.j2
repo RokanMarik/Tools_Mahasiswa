@@ -1,0 +1,22 @@
+{# journal_analyzer/prompts/templates/generator_user.j2 #}
+Buat draft artikel ilmiah berdasarkan referensi berikut:
+
+Pertanyaan/Topik: {{ research_topic }}
+{% if methodology %}Metodologi yang diminta: {{ methodology }}{% endif %}
+{% if citation_style %}Format sitasi: {{ citation_style }}{% endif %}
+
+{% if reader_summaries %}
+Ringkasan Jurnal Referensi:
+{% for summary in reader_summaries %}
+--- Jurnal {{ loop.index }} ---
+{{ summary }}
+
+{% endfor %}
+{% endif %}
+
+{% if gap_analysis %}
+Research Gap yang Teridentifikasi:
+{{ gap_analysis }}
+{% endif %}
+
+Buat draft artikel lengkap sesuai format yang ditentukan. Gunakan placeholder [DATA DIBUTUHKAN: ...] untuk data empiris yang perlu diisi.
