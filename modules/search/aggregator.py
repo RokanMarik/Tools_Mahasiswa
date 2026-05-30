@@ -1,5 +1,7 @@
 """Aggregator: merge, deduplicate, and sort papers from multiple sources."""
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from .paper_model import Paper
 from . import openalex, garuda
 from .scoring import sort_papers
@@ -13,7 +15,7 @@ def search(
     per_source_limit: int = 5,
     sort_by: str = "composite",
 ) -> list[Paper]:
-    """Search all sources and return deduplicated, sorted results.
+    """Search all sources in parallel and return deduplicated, sorted results.
 
     Args:
         topic: Search query.
@@ -26,12 +28,18 @@ def search(
     """
     all_papers: list[Paper] = []
 
-    for source_module in SOURCES:
-        try:
-            papers = source_module.search(topic, limit=per_source_limit)
-            all_papers.extend(papers)
-        except RuntimeError:
-            continue
+    with ThreadPoolExecutor(max_workers=len(SOURCES)) as executor:
+        future_to_source = {
+            executor.submit(_safe_search, source, topic, per_source_limit): source
+            for source in SOURCES
+        }
+        for future in as_completed(future_to_source):
+            source = future_to_source[future]
+            try:
+                papers = future.result()
+                all_papers.extend(papers)
+            except RuntimeError:
+                continue
 
     if not all_papers:
         raise RuntimeError(f"No results from any source for query: {topic}")
@@ -39,6 +47,11 @@ def search(
     papers = _deduplicate(all_papers)
     papers = sort_papers(papers, sort_by=sort_by)
     return papers[:total_limit]
+
+
+def _safe_search(source, topic: str, limit: int) -> list[Paper]:
+    """Search a single source, raising RuntimeError on failure."""
+    return source.search(topic, limit=limit)
 
 
 def _deduplicate(papers: list[Paper]) -> list[Paper]:

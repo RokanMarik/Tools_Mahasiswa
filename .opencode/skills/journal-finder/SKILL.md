@@ -15,11 +15,10 @@ Natural language detection:
 - "search for journals on [topic]"
 - "cari paper tentang [topik]"
 
-**Multi-source search:** This skill searches three free APIs simultaneously:
+**Multi-source search:** This skill searches two free APIs:
+- **OpenAlex** (api.openalex.org) — 250M+ papers with citation counts, ingests CrossRef + many sources
 - **Garuda** (garuda.ristekbrin.go.id) — Indonesian academic journals
-- **CrossRef** (api.crossref.org) — Global journal database
-- **Semantic Scholar** (api.semanticscholar.org) — Global research papers
-Results are merged, deduplicated by DOI, and sorted by relevance. No API keys needed.
+Results are merged, deduplicated by DOI, and sorted by composite score (citations 60% + recency 40%). No API keys needed.
 
 ## Workflow
 
@@ -37,7 +36,12 @@ Results are merged, deduplicated by DOI, and sorted by relevance. No API keys ne
 
 ```bash
 python scripts/journal_search.py --topic "machine learning" --limit 3
+python scripts/journal_search.py --topic "machine learning" --limit 5 --sort citations
+python scripts/journal_search.py --topic "machine learning" --limit 5 --sort year
+python scripts/journal_search.py --topic "machine learning" --limit 5 --sort composite  # default
 ```
+
+`--sort` options: `composite` (default), `citations`, `year`, `relevance`
 
 Output JSON:
 ```json
@@ -54,7 +58,8 @@ Output JSON:
       "doi": "10.xxxx/xxxxx",
       "url": "https://...",
       "abstract": "...",
-      "metadata_source": "crossref"
+      "citation_count": 42,
+      "metadata_source": "openalex"
     }
   ],
   "error": null
@@ -75,7 +80,7 @@ Nemu {n} paper:
 
 1. {title}
    Authors: {authors}
-   Year: {year} | Journal: {journal}
+   Year: {year} | Journal: {journal} | Citations: {citation_count}
    DOI: {doi}
    {url}
 ```
