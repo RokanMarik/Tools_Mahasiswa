@@ -1,0 +1,20 @@
+{# journal_analyzer/prompts/templates/data_analysis_user.j2 #}
+Interpretasikan hasil analisis data berikut:
+
+Pertanyaan Penelitian: {{ research_question }}
+
+{% if dataset_description %}
+Deskripsi Dataset:
+{{ dataset_description }}
+{% endif %}
+
+{% if statistical_results %}
+Hasil Analisis Statistik:
+{{ statistical_results }}
+{% endif %}
+
+{% if hypothesis %}
+Hipotesis: {{ hypothesis }}
+{% endif %}
+
+Berikan interpretasi dan rekomendasi sesuai format yang ditentukan.
