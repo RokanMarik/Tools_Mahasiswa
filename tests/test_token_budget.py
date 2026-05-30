@@ -1,3 +1,5 @@
+import pytest
+
 from core.token_budget import TokenBudget, BudgetExceededError
 
 
@@ -21,21 +23,24 @@ def test_add_usage():
 
 def test_check_within_budget():
     budget = TokenBudget(daily_limit=1000, used_today=400)
-    assert budget.check_available(500) == True
+    assert budget.check_available(500)
 
 
 def test_check_exceeds_budget():
     budget = TokenBudget(daily_limit=1000, used_today=800)
-    assert budget.check_available(300) == False
+    assert not budget.check_available(300)
+
+
+def test_check_exact_boundary():
+    """Test exact boundary: remaining == requested should pass."""
+    budget = TokenBudget(daily_limit=1000, used_today=500)
+    assert budget.check_available(500)
 
 
 def test_exceed_raises_error():
     budget = TokenBudget(daily_limit=1000, used_today=800)
-    try:
+    with pytest.raises(BudgetExceededError):
         budget.reserve(300)
-        assert False, "Should have raised BudgetExceededError"
-    except BudgetExceededError:
-        pass
 
 
 def test_reserve_within_budget():
@@ -53,3 +58,15 @@ def test_reset():
     budget = TokenBudget(daily_limit=1000, used_today=500)
     budget.reset()
     assert budget.used_today == 0
+
+
+def test_get_task_budget_known_mode():
+    budget = TokenBudget()
+    assert budget.get_task_budget("read") == 5000
+    assert budget.get_task_budget("review") == 15000
+    assert budget.get_task_budget("full") == 30000
+
+
+def test_get_task_budget_unknown_mode():
+    budget = TokenBudget()
+    assert budget.get_task_budget("unknown_mode") == TokenBudget.DEFAULT_TASK_BUDGET

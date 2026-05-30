@@ -7,12 +7,13 @@ class TokenBudget:
     """Tracks and manages daily token usage with per-task limits."""
 
     DEFAULT_DAILY_LIMIT = 50000
+    DEFAULT_TASK_BUDGET = 10000
     DEFAULT_PER_TASK = {
         "read": 5000,
         "review": 15000,
         "full": 30000,
         "generate": 40000,
-        "data_analysis": 10000,
+        "data_analysis": DEFAULT_TASK_BUDGET,
     }
 
     def __init__(
@@ -30,7 +31,7 @@ class TokenBudget:
         return self._used_today
 
     @used_today.setter
-    def used_today(self, value: int):
+    def used_today(self, value: int) -> None:
         self._used_today = value
 
     @property
@@ -56,7 +57,7 @@ class TokenBudget:
 
     def get_task_budget(self, mode: str) -> int:
         """Get per-task budget for a mode."""
-        return self.per_task.get(mode, 10000)
+        return self.per_task.get(mode, self.DEFAULT_TASK_BUDGET)
 
     def reset(self) -> None:
         """Reset daily counter."""
