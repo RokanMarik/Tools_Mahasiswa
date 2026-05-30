@@ -1,9 +1,9 @@
 """Aggregator: merge, deduplicate, and sort papers from multiple sources."""
 
 from .paper_model import Paper
-from . import garuda, crossref, semantic_scholar
+from . import garuda, crossref, semantic_scholar, searxng
 
-SOURCES = [garuda, crossref, semantic_scholar]
+SOURCES = [garuda, crossref, semantic_scholar, searxng]
 
 
 def search(topic: str, total_limit: int = 3, per_source_limit: int = 5) -> list[Paper]:
@@ -31,7 +31,7 @@ def _deduplicate(papers: list[Paper]) -> list[Paper]:
     seen_titles: set[str] = set()
     result: list[Paper] = []
 
-    source_priority = {"garuda": 0, "crossref": 1, "semantic_scholar": 2}
+    source_priority = {"garuda": 0, "crossref": 1, "semantic_scholar": 2, "searxng": 3}
     papers.sort(key=lambda p: source_priority.get(p.source, 99))
 
     for paper in papers:
