@@ -1,0 +1,9 @@
+{# journal_analyzer/prompts/templates/self_review_user.j2 #}
+Review draft artikel ilmiah berikut:
+
+{% if research_topic %}Topik: {{ research_topic }}{% endif %}
+
+--- DRAFT ARTIKEL ---
+{{ draft_article }}
+
+Berikan review sesuai format yang ditentukan.
