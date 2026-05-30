@@ -19,28 +19,100 @@ export default function MapPage() {
   const [rumpunFilter, setRumpunFilter] = useState("");
   const [vitalitasFilter, setVitalitasFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResultInfo, setSearchResultInfo] = useState<string | null>(null);
 
+  // Fetch markers
   useEffect(() => {
-    fetch("/api/locations/markers").then((r) => r.json()).then((data) => { setMarkers(data); setBahasaList(data); }).finally(() => setLoading(false));
+    fetch("/api/locations/markers")
+      .then((r) => r.json())
+      .then((data) => { setMarkers(data); setBahasaList(data); })
+      .finally(() => setLoading(false));
   }, []);
 
+  // Fetch rumpun
   useEffect(() => {
-    fetch("/api/rumpun").then((r) => r.json()).then((data) => setRumpunList(data));
+    fetch("/api/rumpun")
+      .then((r) => r.json())
+      .then((data) => setRumpunList(data));
   }, []);
 
+  // Smart search
+  const handleSmartSearch = async (query: string) => {
+    setSearchLoading(true);
+    setSearchResultInfo(null);
+
+    try {
+      const res = await fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const data = await res.json();
+
+      if (data.results) {
+        setBahasaList(data.results);
+        setSearchResultInfo(
+          data.usedAI
+            ? `AI: ${data.results.length} hasil untuk "${query}"`
+            : `Keyword: ${data.results.length} hasil untuk "${query}"`
+        );
+      }
+    } catch {
+      // Fallback: client-side filter
+      const q = query.toLowerCase();
+      const filtered = markers.filter(
+        (b) => b.namaBahasa.toLowerCase().includes(q) || b.namaLokal?.toLowerCase().includes(q)
+      );
+      setBahasaList(filtered);
+      setSearchResultInfo(`Ditemukan ${filtered.length} bahasa`);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Apply filters (rumpun + vitalitas only, search handled by smart search)
   useEffect(() => {
+    if (searchResultInfo) return; // Don't override search results
+
     let filtered = markers;
-    if (search) { const q = search.toLowerCase(); filtered = filtered.filter((b) => b.namaBahasa.toLowerCase().includes(q) || b.namaLokal?.toLowerCase().includes(q)); }
     if (rumpunFilter) filtered = filtered.filter((b) => b.rumpunNama === rumpunFilter);
     if (vitalitasFilter) filtered = filtered.filter((b) => b.statusVitalitas === vitalitasFilter);
     setBahasaList(filtered);
-  }, [search, rumpunFilter, vitalitasFilter, markers]);
+  }, [rumpunFilter, vitalitasFilter, markers, searchResultInfo]);
+
+  // Reset search result info when filters change
+  useEffect(() => {
+    if (searchResultInfo && (rumpunFilter || vitalitasFilter)) {
+      setSearchResultInfo(null);
+    }
+  }, [rumpunFilter, vitalitasFilter, searchResultInfo]);
 
   return (
     <div className="h-screen flex flex-col">
       <Header />
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar search={search} onSearchChange={setSearch} rumpunFilter={rumpunFilter} onRumpunChange={setRumpunFilter} vitalitasFilter={vitalitasFilter} onVitalitasChange={setVitalitasFilter} rumpunList={rumpunList} bahasaList={bahasaList.map((b) => ({ id: b.id, namaBahasa: b.namaBahasa, namaLokal: b.namaLokal, jumlahPenutur: b.jumlahPenutur, statusVitalitas: b.statusVitalitas, rumpunNama: b.rumpunNama }))} loading={loading} />
+        <Sidebar
+          search={search}
+          onSearchChange={setSearch}
+          onSmartSearch={handleSmartSearch}
+          searchLoading={searchLoading}
+          searchResultInfo={searchResultInfo}
+          rumpunFilter={rumpunFilter}
+          onRumpunChange={setRumpunFilter}
+          vitalitasFilter={vitalitasFilter}
+          onVitalitasChange={setVitalitasFilter}
+          rumpunList={rumpunList}
+          bahasaList={bahasaList.map((b) => ({
+            id: b.id,
+            namaBahasa: b.namaBahasa,
+            namaLokal: b.namaLokal,
+            jumlahPenutur: b.jumlahPenutur,
+            statusVitalitas: b.statusVitalitas,
+            rumpunNama: b.rumpunNama,
+          }))}
+          loading={loading}
+        />
         <div className="flex-1"><LanguageMap markers={bahasaList} /></div>
       </div>
     </div>

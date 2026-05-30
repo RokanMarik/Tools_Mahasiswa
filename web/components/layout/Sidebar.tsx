@@ -6,6 +6,9 @@ import { LoadingState } from "@/components/shared/LoadingState";
 interface SidebarProps {
   search: string;
   onSearchChange: (v: string) => void;
+  onSmartSearch: (query: string) => void;
+  searchLoading: boolean;
+  searchResultInfo: string | null;
   rumpunFilter: string;
   onRumpunChange: (v: string) => void;
   vitalitasFilter: string;
@@ -15,12 +18,23 @@ interface SidebarProps {
   loading: boolean;
 }
 
-export function Sidebar({ search, onSearchChange, rumpunFilter, onRumpunChange, vitalitasFilter, onVitalitasChange, rumpunList, bahasaList, loading }: SidebarProps) {
+export function Sidebar({
+  search, onSearchChange, onSmartSearch, searchLoading, searchResultInfo,
+  rumpunFilter, onRumpunChange, vitalitasFilter, onVitalitasChange,
+  rumpunList, bahasaList, loading,
+}: SidebarProps) {
   return (
     <div className="w-80 h-full flex flex-col bg-earth-50/95 backdrop-blur-sm border-r border-earth-300">
       <div className="p-4 space-y-4 border-b border-earth-300">
-        <SearchInput value={search} onChange={onSearchChange} />
-        <FilterPanel rumpunFilter={rumpunFilter} vitalitasFilter={vitalitasFilter} onRumpunChange={onRumpunChange} onVitalitasChange={onVitalitasChange} rumpunList={rumpunList} />
+        <SearchInput value={search} onChange={onSearchChange} onSearch={onSmartSearch} loading={searchLoading} />
+        {searchResultInfo && (
+          <p className="text-xs text-earth-600 italic">{searchResultInfo}</p>
+        )}
+        <FilterPanel
+          rumpunFilter={rumpunFilter} vitalitasFilter={vitalitasFilter}
+          onRumpunChange={onRumpunChange} onVitalitasChange={onVitalitasChange}
+          rumpunList={rumpunList}
+        />
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {loading ? (<LoadingState message="Memuat bahasa..." />) : bahasaList.length === 0 ? (
