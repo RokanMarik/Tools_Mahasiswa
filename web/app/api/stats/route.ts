@@ -1,24 +1,25 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getCache, setCache, TTL } from "@/lib/cache";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
-  const cached = getCache("stats");
-  if (cached) return NextResponse.json(cached);
+  const { data: stats, error: s1 } = await supabase.from("bahasa").select("*", { count: "exact", head: true });
+  const { count: rumpunCount } = await supabase.from("rumpun_bahasa").select("*", { count: "exact", head: true });
+  const { count: lokasiCount } = await supabase.from("lokasi").select("*", { count: "exact", head: true });
+  const { data: vitalitasRaw } = await supabase.from("bahasa").select("status_vitalitas");
 
-  const [totalBahasa, totalRumpun, totalLokasi, vitalitasRaw] = await Promise.all([
-    prisma.bahasa.count(),
-    prisma.rumpunBahasa.count(),
-    prisma.lokasi.count(),
-    prisma.bahasa.groupBy({ by: ["statusVitalitas"], _count: true }),
-  ]);
+  if (s1) return NextResponse.json({ error: s1.message }, { status: 500 });
 
   const vitalitasBreakdown: Record<string, number> = {};
-  for (const v of vitalitasRaw) {
-    if (v.statusVitalitas) vitalitasBreakdown[v.statusVitalitas] = v._count;
+  for (const v of vitalitasRaw || []) {
+    if (v.status_vitalitas) {
+      vitalitasBreakdown[v.status_vitalitas] = (vitalitasBreakdown[v.status_vitalitas] || 0) + 1;
+    }
   }
 
-  const stats = { totalBahasa, totalRumpun, totalLokasi, vitalitasBreakdown };
-  setCache("stats", stats, TTL.STATS);
-  return NextResponse.json(stats);
+  return NextResponse.json({
+    totalBahasa: stats?.length ?? 0,
+    totalRumpun: rumpunCount ?? 0,
+    totalLokasi: lokasiCount ?? 0,
+    vitalitasBreakdown,
+  });
 }

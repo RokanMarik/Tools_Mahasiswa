@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getCache, setCache, TTL } from "@/lib/cache";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
-  const cached = getCache("rumpun");
-  if (cached) return NextResponse.json(cached);
+  const { data: rumpun, error } = await supabase
+    .from("rumpun_bahasa")
+    .select("id, nama_rumpun, sub_rumpun, bahasa(id)");
 
-  const rumpunList = await prisma.rumpunBahasa.findMany({
-    select: { id: true, namaRumpun: true, subRumpun: true, _count: { select: { bahasa: true } } },
-    orderBy: { namaRumpun: "asc" },
-  });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const result = rumpunList.map((r) => ({
-    id: r.id, namaRumpun: r.namaRumpun, subRumpun: r.subRumpun, bahasaCount: r._count.bahasa,
+  const result = (rumpun || []).map((r: any) => ({
+    id: r.id,
+    namaRumpun: r.nama_rumpun,
+    subRumpun: r.sub_rumpun,
+    bahasaCount: r.bahasa?.length ?? 0,
   }));
 
-  setCache("rumpun", result, TTL.RUMPUN);
   return NextResponse.json(result);
 }
