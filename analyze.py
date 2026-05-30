@@ -9,6 +9,7 @@ Usage:
     python analyze.py jurnal.pdf --mode generate --prompt "Topik riset"
     python analyze.py --input-text "teks..." --mode review
     python analyze.py --research-question "Pertanyaan riset" --dataset data.csv --mode data-analysis
+    python analyze.py jurnal1.pdf --mode compare --compare jurnal2.pdf jurnal3.pdf
 """
 
 from journal_analyzer.analyze import main

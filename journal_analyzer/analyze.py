@@ -21,7 +21,7 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description="Journal Analysis System")
     parser.add_argument("input", nargs="?", help="PDF file or URL/DOI")
-    parser.add_argument("--mode", required=True, choices=["read", "review", "full", "gap", "data-analysis", "generate"], help="Analysis mode")
+    parser.add_argument("--mode", required=True, choices=["read", "review", "full", "gap", "data-analysis", "generate", "compare"], help="Analysis mode")
     parser.add_argument("--input-text", help="Input text directly")
     parser.add_argument("--no-limit", action="store_true", help="Bypass token budget limit")
     parser.add_argument("--research-question", help="Research question for data-analysis or gap mode")
@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--prompt", help="Research topic/prompt for generate mode")
     parser.add_argument("--methodology", help="Requested methodology for generate mode")
     parser.add_argument("--citation-style", help="Citation style for generate mode (default: APA7)")
+    parser.add_argument("--compare", nargs="*", help="Additional paper files to compare with")
     args = parser.parse_args()
 
     # Load config
@@ -114,6 +115,17 @@ def main():
         results["gap_analyzer"] = gap_result
         gen_results = _run_generate(args, article, reader_result, gap_result, cache, content_hash, config, router)
         results.update(gen_results)
+
+    if args.mode == "compare":
+        all_articles = [article]
+        if args.compare:
+            from types import SimpleNamespace
+            for compare_file in args.compare:
+                compare_article = _parse_input(SimpleNamespace(input=compare_file, input_text=None))
+                if compare_article:
+                    all_articles.append(compare_article)
+        comparison_result = _run_compare(args, all_articles, cache, content_hash, config, router)
+        results["comparison"] = comparison_result
 
     # Output
     output = aggregator.aggregate(results)
@@ -301,6 +313,35 @@ def _run_data_analysis(args, cache, content_hash, config, router):
         return {"status": "failed", "error": "Data Analysis gagal"}
 
     cache.set_analysis(content_hash, "data_analysis", result)
+    return {"status": "success", "data": result}
+
+
+def _run_compare(args, articles, cache, content_hash, config, router):
+    from workers.comparison_worker import ComparisonWorker
+
+    cached = cache.get_analysis(content_hash, "comparison")
+    if cached:
+        return {"status": "success", "data": cached}
+
+    papers = []
+    for art in articles:
+        paper = {"title": art.metadata.get("title", "Unknown")}
+        if art.sections.get("abstract"):
+            paper["summary"] = art.sections["abstract"][:500]
+        if art.methodology_type:
+            paper["methodology"] = art.methodology_type
+        if art.key_findings:
+            paper["key_findings"] = art.key_findings
+        papers.append(paper)
+
+    model = router.get_model_name(ModelTier.HEAVY)
+    worker = ComparisonWorker()
+    result = worker.run(papers, model=model)
+
+    if result is None:
+        return {"status": "failed", "error": "Comparison gagal"}
+
+    cache.set_analysis(content_hash, "comparison", result)
     return {"status": "success", "data": result}
 
 
