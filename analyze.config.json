@@ -1,0 +1,20 @@
+{
+  "token_budget": {
+    "daily_limit": 50000,
+    "per_task": {
+      "read": 5000,
+      "review": 15000,
+      "full": 30000,
+      "generate": 40000,
+      "data_analysis": 10000
+    }
+  },
+  "default_models": {
+    "light": "google/gemini-2.0-flash",
+    "medium": "anthropic/claude-sonnet-4-20250514",
+    "heavy": "anthropic/claude-opus-4-20250514"
+  },
+  "cache_ttl_days": 7,
+  "output_language": "id",
+  "citation_style": "APA7"
+}
