@@ -21,8 +21,25 @@ try {
     Write-Host "=== 9Router Auto-Routing Initialization ===" -ForegroundColor Cyan
     Write-Host ""
 
-    # ── Step 1/4: Health Check ──────────────────────────────────────────────────
-    Write-Host "[1/4] Checking 9Router health..." -ForegroundColor Cyan
+    # ── Step 1/5: Auto-Start SearXNG ─────────────────────────────────────────────
+    Write-Host "[1/5] Checking SearXNG..." -ForegroundColor Cyan
+
+    $searxngScript = Join-Path $PSScriptRoot "start-searxng.ps1"
+    if (Test-Path $searxngScript) {
+        try {
+            & $searxngScript
+        }
+        catch {
+            Write-Host "      WARNING: Could not start SearXNG ($_) " -ForegroundColor Yellow
+            Write-Host "      Web search will not be available." -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "      WARNING: start-searxng.ps1 not found" -ForegroundColor Yellow
+    }
+
+    # ── Step 2/5: Health Check ──────────────────────────────────────────────────
+    Write-Host "[2/5] Checking 9Router health..." -ForegroundColor Cyan
 
     try {
         $null = Invoke-RestMethod -Uri "http://localhost:20128/api/health" -TimeoutSec 5 -ErrorAction Stop
@@ -34,8 +51,8 @@ try {
         exit 1
     }
 
-    # ── Step 2/4: Environment Variables ─────────────────────────────────────────
-    Write-Host "[2/4] Setting environment variables..." -ForegroundColor Cyan
+    # ── Step 3/5: Environment Variables ─────────────────────────────────────────
+    Write-Host "[3/5] Setting environment variables..." -ForegroundColor Cyan
 
     $env:NINEROUTER_URL = "http://localhost:20128"
 
@@ -50,8 +67,8 @@ try {
     }
     Write-Host "      NINEROUTER_URL = $env:NINEROUTER_URL" -ForegroundColor Green
 
-    # ── Step 3/4: Verify Combo Models ───────────────────────────────────────────
-    Write-Host "[3/4] Verifying combo models..." -ForegroundColor Cyan
+    # ── Step 4/5: Verify Combo Models ───────────────────────────────────────────
+    Write-Host "[4/5] Verifying combo models..." -ForegroundColor Cyan
 
     $comboModels = @("auto-berat", "auto-sedang", "auto-ringan")
     $allModelsPresent = $true
@@ -92,8 +109,8 @@ try {
         $combosLoaded = $true
     }
 
-    # ── Step 4/4: Load Keyword Router ───────────────────────────────────────────
-    Write-Host "[4/4] Loading keyword router..." -ForegroundColor Cyan
+    # ── Step 5/5: Load Keyword Router ───────────────────────────────────────────
+    Write-Host "[5/5] Loading keyword router..." -ForegroundColor Cyan
 
     $keywordRouterPath = Join-Path $PSScriptRoot "keyword-router.ps1"
 
