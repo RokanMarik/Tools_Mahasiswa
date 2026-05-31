@@ -178,9 +178,9 @@ ui:
 #
 outgoing:
   # default timeout in seconds, can be override by engine
-  request_timeout: 3.0
+  request_timeout: 5.0
   # the maximum timeout in seconds
-  # max_request_timeout: 10.0
+  max_request_timeout: 10.0
   # suffix of searxng_useragent, could contain information like an email address
   # to the administrator
   useragent_suffix: ""
@@ -190,7 +190,9 @@ outgoing:
   # point.
   pool_maxsize: 20
   # See https://www.python-httpx.org/http2/
-  enable_http2: true
+  enable_http2: false
+  # Disable SSL verification for outgoing requests (fixes SSL handshake failures)
+  verify: false
   # uncomment below section if you want to use a custom server certificate
   # see https://www.python-httpx.org/advanced/#changing-the-verification-defaults
   # and https://www.python-httpx.org/compatibility/#ssl-configuration
