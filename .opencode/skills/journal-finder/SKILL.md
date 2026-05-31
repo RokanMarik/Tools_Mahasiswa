@@ -7,6 +7,35 @@ description: Search for academic journals via 9Router. Use when user asks to fin
 
 Search for academic journals and papers via 9Router. Returns structured paper metadata.
 
+## Prerequisites
+
+Before using this skill, run the prerequisites check:
+
+```powershell
+.\scripts\check-prerequisites.ps1
+```
+
+This verifies:
+- **Docker** — for SearXNG container
+- **9Router** — running on port 20128
+- **Python 3.14+** — with `requests` package
+- **SearXNG** — Docker container on port 8888 (`docker start searxng`)
+- **SEARXNG_URL** env var — `http://localhost:8888`
+
+**Quick setup if missing:**
+```powershell
+# Start SearXNG
+docker start searxng
+
+# Set env var (current session)
+$env:SEARXNG_URL="http://localhost:8888"
+
+# Set env var (permanent)
+[System.Environment]::SetEnvironmentVariable("SEARXNG_URL", "http://localhost:8888", "User")
+```
+
+Without SearXNG, the skill still works but only searches OpenAlex + Garuda (Indonesian journals like iicls.org won't be found).
+
 ## Trigger
 
 Natural language detection:
