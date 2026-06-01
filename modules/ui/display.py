@@ -11,37 +11,58 @@ class Display:
         return text.encode('ascii', 'replace').decode('ascii')
 
     def _citation_reason(self, p):
-        """Give reason why a paper is cited (or why not yet)."""
+        """Explain WHY people cite this paper."""
         citations = p.get('citations', 0) or 0
         year = p.get('year', 0) or 0
         title = p.get('title', '').lower()
         age = (2025 - year) if year else 0
+        doi = p.get('doi', '').lower()
 
-        reasons = []
+        # Check both title AND journal for paper type
+        text = title + ' ' + p.get('journal', '').lower()
+        # Primary reason based on paper type
+        if 'review' in text or 'survey' in text or 'meta-analysis' in text:
+            primary = 'Review komprehensif — orang nyitasi ini karena rangkuman lengkap penelitian sebelumnya'
+        elif 'introduction' in text or 'guide' in text or 'handbook' in text:
+            primary = 'Buku panduan/pengenalan topik — jadi rujukan standar buat yang baru belajar'
+        elif 'framework' in text or 'model' in text or 'theory' in text:
+            primary = 'Menawarkan framework/model — peneliti lain pakai sebagai dasar teori'
+        elif 'impact' in text or 'effect' in text or 'influence' in text:
+            primary = 'Studi tentang dampak/efek — jadi referensi bukti empiris di bidang ini'
+        elif 'method' in text or 'approach' in text or 'design' in text:
+            primary = 'Menawarkan metode baru — peneliti lain mengadopsi pendekatannya'
+        elif 'challenge' in text or 'barrier' in text or 'problem' in text:
+            primary = 'Mengidentifikasi masalah/kendala — jadi acuan diskusi tantangan di bidang ini'
+        elif 'best practice' in text or 'strategy' in text or 'technique' in text:
+            primary = 'Rekomendasi strategi/best practice — dirujuk sebagai panduan praktis'
+        elif 'case study' in text or 'implementation' in text:
+            primary = 'Studi kasus implementasi — jadi contoh nyata yang bisa ditiru peneliti lain'
+        else:
+            # Generic but informative
+            if citations >= 50:
+                primary = 'Topik yang sangat relevan — banyak peneliti merujuk ke paper ini sebagai dasar'
+            elif citations >= 10:
+                primary = 'Penelitian penting di topik ini — jadi acuan utama dalam literatur'
+            elif citations >= 1:
+                primary = 'Kontribusi spesifik di bidangnya — peneliti lain menganggap relevan untuk dirujuk'
+            else:
+                primary = 'Belum ada sitasi — tapi topik ini relevan, berpotensi jadi referensi di masa depan'
+
+        # Additional context
+        extras = []
         if citations >= 100:
-            reasons.append('Paper referensi utama di bidangnya')
-        elif citations >= 50:
-            reasons.append('Sering jadi rujukan penting')
-        elif citations >= 10:
-            reasons.append('Banyak dikutip peneliti lain')
-        elif citations >= 1:
-            reasons.append('Mulai banyak dirujuk')
-
+            extras.append('Sudah jadi standar rujukan di bidang ini')
         if age > 10:
-            reasons.append('Sudah lama terbit, banyak waktu untuk disitasi')
-        elif age <= 2:
-            reasons.append('Baru terbit, belum banyak waktu untuk disitasi')
+            extras.append('Karya klasik — sudah bertahan lebih dari 10 tahun sebagai referensi')
+        elif age <= 2 and citations > 0:
+            extras.append('Baru tapi langsung impactful — menunjukkan kualitas tinggi')
+        if p.get('journal', ''):
+            j = p['journal'].lower()
+            if any(k in j for k in ['handbook', 'encyclopedia', 'annual review']):
+                extras.append('Terbit di sumber referensi bergengsi')
 
-        if 'review' in title or 'survey' in title:
-            reasons.append('Jenis review article, memang sering disitasi')
-
-        if not reasons and citations > 0:
-            reasons.append('Topik relevan dan banyak diteliti')
-
-        if citations == 0:
-            reasons.append('Belum ada sitasi, tapi cocok untuk referensi awal/topik baru')
-
-        return '; '.join(reasons) if reasons else 'Paper penelitian yang valid' ''
+        parts = [primary] + extras
+        return '; '.join(parts)
 
     def _format_paper(self, p, n):
         """Format a single paper with full details."""
