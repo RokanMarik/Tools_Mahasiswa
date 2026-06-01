@@ -5,6 +5,10 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 class Display:
+    def _clean(self, text):
+        if not text: return ''
+        return text.encode('ascii', 'replace').decode('ascii')
+
     def display_results(self, papers, query, sort="relevance", show_abstract=False):
         if not papers:
             return f"{Fore.YELLOW}Tidak ada hasil. Coba kata kunci lain.{Style.RESET_ALL}"
@@ -12,7 +16,7 @@ class Display:
         lines.append(f"{Fore.CYAN}Hasil: '{query}' ({len(papers)} paper){Style.RESET_ALL}")
         lines.append("=" * 60)
         for i, p in enumerate(papers, 1):
-            lines.append(f"{i}. {p.get('title','')}")
+            lines.append(f"{i}. {self._clean(p.get('title',''))}")
             if p.get('year'): lines.append(f"   Tahun: {p['year']}")
             if p.get('citations'): lines.append(f"   Disitasi: {p['citations']}x")
             if p.get('journal'): lines.append(f"   Jurnal: {p['journal']}")

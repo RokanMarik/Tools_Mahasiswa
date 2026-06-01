@@ -6,6 +6,10 @@ import json
 import os
 import sys
 
+# Fix Windows console encoding
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from modules.search.engine import SearchEngine, SORT_CITATIONS, SORT_YEAR, SORT_RELEVANCE, SOURCE_ALL
@@ -24,6 +28,8 @@ except ImportError:
 
 
 def cmd_search(args):
+    from modules.search.scorer import PaperScorer
+    from modules.search.summarizer import AbstractSummarizer
     engine = SearchEngine()
     display = Display()
     sources = [s.strip() for s in args.source.split(',')] if args.source else [SOURCE_ALL]
@@ -32,7 +38,16 @@ def cmd_search(args):
         result = engine.get_balanced_results(query=args.query, limit=args.limit or 6, year_from=args.year_from, year_to=args.year_to)
         print(display.display_balanced(result["foundational"], result["recent"], args.query))
     else:
-        papers = engine.search(query=args.query, sources=sources, sort=args.sort or SORT_RELEVANCE, limit=args.limit or 6, year_from=args.year_from, year_to=args.year_to)
+        sort = args.sort or SORT_RELEVANCE
+        if args.sort_quality:
+            papers = engine.search_enhanced(query=args.query, sources=sources, sort='quality', limit=args.limit or 6, year_from=args.year_from, year_to=args.year_to)
+        else:
+            papers = engine.search(query=args.query, sources=sources, sort=sort, limit=args.limit or 6, year_from=args.year_from, year_to=args.year_to)
+
+        if args.quality:
+            papers = PaperScorer().score_all(papers)
+        if args.summary:
+            papers = AbstractSummarizer().summarize_papers(papers)
         if args.format == "json":
             print(json.dumps(papers, indent=2, ensure_ascii=False))
         elif args.format == "table":
@@ -139,6 +154,9 @@ def main():
     sp.add_argument('--format', choices=['table','json','pretty'], default='pretty')
     sp.add_argument('--export', choices=['csv','bibtex','ris','json'])
     sp.add_argument('--output')
+    sp.add_argument('--quality', action='store_true', help='Show quality scores')
+    sp.add_argument('--summary', action='store_true', help='Show abstract summaries')
+    sp.add_argument('--sort-quality', action='store_true', help='Sort by quality score')
 
     sp = sub.add_parser('save', help='Save to Zotero')
     sp.add_argument('--papers', required=True)

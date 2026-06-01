@@ -2,6 +2,8 @@
 
 from typing import List, Dict, Optional
 from .semantic_scholar import SemanticScholarClient
+from .scorer import PaperScorer
+from .summarizer import AbstractSummarizer
 from .crossref import CrossrefClient
 from .garuda import GarudaClient
 
@@ -24,6 +26,8 @@ class SearchEngine:
         self.semantic = SemanticScholarClient()
         self.crossref = CrossrefClient()
         self.garuda = GarudaClient()
+        self.scorer = PaperScorer()
+        self.summarizer = AbstractSummarizer()
 
     def search(self, query, sources=None, sort=SORT_RELEVANCE, limit=6, year_from=None, year_to=None):
         if sources is None: sources = [SOURCE_ALL]
@@ -89,3 +93,11 @@ class SearchEngine:
                 recent.append(p)
                 seen.add(key)
         return {"foundational": foundational, "recent": recent}
+    def search_enhanced(self, query, sources=None, sort="quality", limit=6, year_from=None, year_to=None):
+        """Search with quality scoring and summaries."""
+        papers = self.search(query, sources, sort if sort != "quality" else SORT_CITATIONS, limit * 2, year_from, year_to)
+        papers = self.scorer.score_all(papers)
+        papers = self.summarizer.summarize_papers(papers)
+        if sort == "quality":
+            papers = sorted(papers, key=lambda p: p.get("quality_score", 0), reverse=True)
+        return papers[:limit]
