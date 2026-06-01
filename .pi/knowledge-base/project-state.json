@@ -1,0 +1,35 @@
+{
+  "project": "Tools_Mahasiswa",
+  "repo": "RokanMarik/Tools_Mahasiswa",
+  "branch": "feature/zotero-integration",
+  "commit": "996d318",
+  "status": "COMPLETE - 5/5 rating",
+  "tests": "73 passed",
+  "files": 24,
+  "modules": [
+    "search",
+    "zotero",
+    "export",
+    "ui"
+  ],
+  "cli": [
+    "search",
+    "save",
+    "citation",
+    "collections",
+    "export"
+  ],
+  "features": [
+    "multi-source search",
+    "citation counts",
+    "year filter",
+    "balanced mode",
+    "zotero sync",
+    "export CSV/BibTeX/RIS"
+  ],
+  "apis": {
+    "Crossref": "working",
+    "Semantic Scholar": "rate-limited",
+    "Garuda": "placeholder"
+  }
+}

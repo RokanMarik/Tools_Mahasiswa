@@ -1,3 +1,30 @@
 {
-  "$schema": "https://opencode.ai/config.json"
+  "$schema": "https://opencode.ai/config.json",
+  "tools": {
+    "allowed": [
+      "read", "write", "edit", "bash",
+      "web_search", "fetch_content",
+      "ctx_execute", "ctx_index", "ctx_search",
+      "lsp_diagnostics", "lsp_navigation",
+      "ast_grep_search", "ast_grep_replace"
+    ]
+  },
+  "skills": [
+    ".opencode/skills/journal-finder-simple/SKILL.md",
+    ".opencode/skills/academic-reviewer-dosen/SKILL.md"
+  ],
+  "plugins": {
+    "pi-subagents": true,
+    "pi-web-access": true,
+    "pi-lens": true,
+    "pi-mcp-adapter": true,
+    "context-mode": true,
+    "pi-hermes-memory": true,
+    "pi-permission-system": true,
+    "pi-markdown-preview": true,
+    "rpiv-todo": true,
+    "rpiv-advisor": true,
+    "rpiv-web-tools": true,
+    "rpiv-pi": true
+  }
 }
