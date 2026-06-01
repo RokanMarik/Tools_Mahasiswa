@@ -11,10 +11,11 @@ class Display:
         return text.encode('ascii', 'replace').decode('ascii')
 
     def _citation_reason(self, p):
-        """Give reason why a paper is highly cited."""
+        """Give reason why a paper is cited (or why not yet)."""
         citations = p.get('citations', 0) or 0
         year = p.get('year', 0) or 0
         title = p.get('title', '').lower()
+        age = (2025 - year) if year else 0
 
         reasons = []
         if citations >= 100:
@@ -26,10 +27,10 @@ class Display:
         elif citations >= 1:
             reasons.append('Mulai banyak dirujuk')
 
-        if year and (2025 - year) > 10:
+        if age > 10:
             reasons.append('Sudah lama terbit, banyak waktu untuk disitasi')
-        elif year and (2025 - year) <= 2:
-            reasons.append('Baru terbit tapi sudah langsung banyak disitasi')
+        elif age <= 2:
+            reasons.append('Baru terbit, belum banyak waktu untuk disitasi')
 
         if 'review' in title or 'survey' in title:
             reasons.append('Jenis review article, memang sering disitasi')
@@ -37,7 +38,10 @@ class Display:
         if not reasons and citations > 0:
             reasons.append('Topik relevan dan banyak diteliti')
 
-        return '; '.join(reasons) if reasons else ''
+        if citations == 0:
+            reasons.append('Belum ada sitasi, tapi cocok untuk referensi awal/topik baru')
+
+        return '; '.join(reasons) if reasons else 'Paper penelitian yang valid' ''
 
     def _format_paper(self, p, n):
         """Format a single paper with full details."""
@@ -67,11 +71,11 @@ class Display:
         elif url:
             lines.append(f"     {Fore.LIGHTBLACK_EX}Link:{Style.RESET_ALL} {url}")
 
-        # Citation reason
-        if citations > 0:
-            reason = self._citation_reason(p)
-            if reason:
-                lines.append(f"     {Fore.GREEN}Kenapa disitasi:{Style.RESET_ALL} {reason}")
+        # Citation reason (always shown)
+        reason = self._citation_reason(p)
+        if reason:
+            color = Fore.GREEN if citations > 0 else Fore.LIGHTBLACK_EX
+            lines.append(f"     {color}Kenapa disitasi:{Style.RESET_ALL} {reason}")
 
         if p.get('summary'):
             lines.append(f"     {Fore.CYAN}Ringkasan:{Style.RESET_ALL} {p['summary']}")
