@@ -1,1 +1,1 @@
-"""Multi-source journal search modules."""
+"""Journal search engine modules."""

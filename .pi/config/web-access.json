@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "default_provider": "auto",
+  "cache_ttl": 3600
+}

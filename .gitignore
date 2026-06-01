@@ -3,12 +3,6 @@ __pycache__/
 *.pyo
 .env
 .cache/
-cache/
-output/
 data/state_store.db/
-web/node_modules/
-web/.next/
-web/out/
-web/*.tsbuildinfo
 
 .worktrees/

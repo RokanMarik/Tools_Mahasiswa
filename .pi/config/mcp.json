@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "servers": {
+    "subagents": "@tintinweb/pi-subagents",
+    "web-access": "pi-web-access",
+    "lens": "pi-lens",
+    "context-mode": "context-mode"
+  }
+}
