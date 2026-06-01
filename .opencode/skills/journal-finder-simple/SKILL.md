@@ -2,7 +2,7 @@
 
 ## Description
 
-Simple, token-efficient journal finder for end users. Interactive clarification with short responses. Returns 3 open access paper links only.
+Simple journal finder for end users. Uses Pi's built-in `web_search` tool to find academic papers. Interactive clarification with short responses. Returns 3 open access paper links only.
 
 ## Metadata
 
@@ -20,6 +20,7 @@ Natural language detection:
 - "cari jurnal tentang..."
 - "find journals about..."
 - "tolong carikan jurnal"
+- "cari paper tentang..."
 
 ## Workflow
 
@@ -35,10 +36,14 @@ User: "sriwijaya"
 Agent: "Sriwijaya apa? (kerajaan/universitas/budaya)"
 ```
 
-### Step 3: Search & Return
+### Step 3: Search via Pi web_search
 ```
 User: "kerajaan"
-Agent: "Mencari..."
+Agent: [uses web_search tool]
+```
+
+### Step 4: Return Results
+```
 Agent: 
 "3 jurnal open access:
 
@@ -62,55 +67,30 @@ Agent:
 
 ## Implementation
 
-### Required Environment Variables
+### No API Key Required
 
-```bash
-NINEROUTER_URL="http://localhost:20128"
-NINEROUTER_KEY="sk-your-key-here"
-```
+Uses Pi's built-in `web_search` tool — no external setup needed.
 
-### Core Function
+### Search Query Construction
+
+When the user provides a topic + context, construct an academic search query:
 
 ```python
-def simple_journal_search(topic: str, context: str) -> List[str]:
-    """
-    Token-efficient journal search
-    
-    Args:
-        topic: Main topic (e.g., "sriwijaya")
-        context: Context/clarification (e.g., "kerajaan")
-    
-    Returns:
-        List of 3 paper links
-    """
-    # 1. Generate short, focused query
-    query = f"{topic} {context} open access"
-    
-    # 2. Search (use cache if available)
-    papers = search_papers(query, limit=3)
-    
-    # 3. Return links only
-    return [p["url"] for p in papers]
+query = f"{topic} {context} academic journal paper open access"
 ```
 
-### Token Optimization
+Then call Pi's `web_search` tool:
 
-**Query Generation:**
-- No chat call for query generation (save ~100 tokens)
-- Direct query construction: `"{topic} {context} open access"`
-- Simple and effective
+```
+web_search({
+  query: "sriwijaya kingdom archaeological research paper open access",
+  max_results: 5
+})
+```
 
-**Search:**
-- Limit to 3 results (not 5 or 10)
-- No content fetching (save ~300-500 tokens)
-- Cache results for repeated queries
+### Parse Results
 
-**Response:**
-- No markdown report generation
-- No abstracts or summaries
-- Links only
-
-**Total per query: ~100-200 tokens**
+Extract paper titles and URLs from the web_search response. Return top 3.
 
 ## Usage Examples
 
@@ -122,6 +102,7 @@ Agent: "Tentang apa?"
 User: "machine learning"
 Agent: "Machine learning apa? (medical/finance/general)"
 User: "medical"
+Agent: [web_search: "machine learning medical diagnosis academic journal open access"]
 Agent: 
 "3 jurnal open access:
 
@@ -143,6 +124,7 @@ Agent: "Tentang apa?"
 User: "kerajaan sriwijaya"
 Agent: "Aspek apa? (sejarah/arkeologi/budaya)"
 User: "arkeologi"
+Agent: [web_search: "sriwijaya kingdom archaeology academic journal open access"]
 Agent: 
 "3 jurnal open access:
 
@@ -162,6 +144,7 @@ Agent:
 User: "cari jurnal tentang AI untuk deteksi kanker"
 Agent: "Jenis kanker? (breast/lung/general)"
 User: "breast"
+Agent: [web_search: "AI breast cancer detection academic journal open access"]
 Agent: 
 "3 jurnal open access:
 
@@ -216,14 +199,14 @@ Agent:
 ```
 Agent: "Tidak ada hasil open access. Coba kata kunci lain?"
 User: "coba dengan 'sriwijaya empire'"
-Agent: [Search again]
+Agent: [web_search again with new query]
 ```
 
-### Scenario 2: API Error
+### Scenario 2: Search Error
 ```
-Agent: "Error. Coba lagi?"
+Agent: "Error saat mencari. Coba lagi?"
 User: "ya"
-Agent: [Retry search]
+Agent: [Retry web_search]
 ```
 
 ### Scenario 3: Unclear Topic
@@ -234,51 +217,33 @@ User: "itu"
 Agent: "Topik tidak jelas. Bisa lebih spesifik?"
 ```
 
-## Integration with Existing System
+## Architecture
 
-This skill uses simplified modules:
-- `WebSearchOptimizer` (for search only)
-- `SearchCache` (for caching)
-- NO `ContentFetcher` (not needed)
-- NO `BatchProcessor` (single query only)
-- NO `MarkdownReporter` (not needed)
-
-## Comparison: Simple vs Advanced
-
-| Feature | Simple Skill | Advanced System |
-|---------|-------------|-----------------|
-| Papers per query | 3 | 5-10 |
-| Output | Links only | Full report |
-| Token usage | ~100-200 | ~500-800 |
-| Batch processing | No | Yes |
-| Content fetching | No | Yes |
-| Report generation | No | Yes |
-| Target user | End user | Researcher |
+This skill uses:
+- **Pi's `web_search` tool** — built-in, no API key needed
+- NO external Python scripts
+- NO external API calls (arXiv, PubMed, etc.)
+- NO local caching needed
 
 ## When to Use
 
-**Use Simple Skill when:**
+**Use this skill when:**
 - Quick lookup needed
 - Single topic search
 - Links are enough
-- Token efficiency matters
-
-**Use Advanced System when:**
-- Multiple research questions
-- Need full reports
-- Need paper summaries
-- Batch processing required
+- User wants fast results
 
 ## Notes
 
-- Always prioritize open access papers
+- Always prioritize open access papers in search query
 - Keep responses short (save tokens)
-- Use cache aggressively
 - 3 papers is optimal (not too few, not too many)
 - Interactive clarification improves relevance
+- **No API key needed** — uses Pi's built-in web_search
+- After finding papers, offer: "Mau simpan ke Zotero?" if user has Zotero configured
 
 ---
 
 **Skill Status:** Ready for use
-**Last Updated:** 2026-05-30
-**Version:** 1.0
+**Last Updated:** 2026-05-31
+**Version:** 3.0 (uses Pi web_search, no external APIs)
